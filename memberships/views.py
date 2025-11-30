@@ -35,6 +35,7 @@ class MemberViewSet(viewsets.ModelViewSet):
     def reservations(self, request, pk=None):
         """Return reservations for a specific member."""
         member = self.get_object()
+        # Import inside method to avoid circular import with reservations app
         from reservations.serializers import ReservationListSerializer
         reservations = member.reservations.all()
         serializer = ReservationListSerializer(reservations, many=True)

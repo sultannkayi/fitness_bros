@@ -1,4 +1,4 @@
-from django.db import models
+from django.db.models import Count, F, Q
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -24,14 +24,12 @@ class FitnessClassViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def available(self, request):
         """Return only classes with available spots."""
-        from django.db.models import Count, Q
-        
         available_classes = self.queryset.filter(is_active=True).annotate(
             confirmed_reservations=Count(
                 'reservations',
                 filter=Q(reservations__status='confirmed')
             )
-        ).filter(confirmed_reservations__lt=models.F('capacity'))
+        ).filter(confirmed_reservations__lt=F('capacity'))
         
         page = self.paginate_queryset(available_classes)
         if page is not None:
@@ -44,6 +42,7 @@ class FitnessClassViewSet(viewsets.ModelViewSet):
     def reservations(self, request, pk=None):
         """Return reservations for a specific fitness class."""
         fitness_class = self.get_object()
+        # Import inside method to avoid circular import with reservations app
         from reservations.serializers import ReservationListSerializer
         reservations = fitness_class.reservations.filter(status='confirmed')
         serializer = ReservationListSerializer(reservations, many=True)
