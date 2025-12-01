@@ -205,3 +205,10 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+#buradaki ignore'lanan dosyalar arasında mevcuttur büyük ihtimalle fakat emin olmak için tekrar yazıyorum
+.venv/
+__pycache__/
+*.pyc
+db.sqlite3
+.env
