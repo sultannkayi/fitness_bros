@@ -25,10 +25,12 @@ jobs:
 
     - name: Run Django migrations
       run: |
+        export DJANGO_SETTINGS_MODULE=main.settings
         python manage.py migrate --noinput
 
     - name: Run tests with pytest + coverage
       run: |
+        export DJANGO_SETTINGS_MODULE=main.settings
         pytest -q --cov=. --cov-report=xml --cov-report=term
 
     - name: Upload coverage report
