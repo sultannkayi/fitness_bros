@@ -1,15 +1,11 @@
-# Test configuration for pytest
+# Test configuration for pytest-django
 import os
-import sys
 import django
 from django.conf import settings
-from django.test.utils import get_runner
 
-if __name__ == "__main__":
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'fitness_bros_api.settings'
+# Django ayarlarını pytest için yapılandır
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'main.settings')
+
+def pytest_configure():
+    """pytest başlatıldığında Django'yu configure et"""
     django.setup()
-    TestRunner = get_runner(settings)
-    test_runner = TestRunner()
-    failures = test_runner.run_tests(["tests"])
-    if failures:
-        raise SystemExit(1)
