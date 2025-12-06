@@ -1,47 +1,89 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-# Hata alacağımızı bile bile import ediyoruz (Çünkü henüz model yok)
-# TDD'de buna "Compilation Error" aşaması denir.
-from .models import Member 
+from django.db.utils import IntegrityError
+
+# Henüz oluşturmadığımız Member modelini import ediyoruz (TDD)
+from .models import Member
 
 User = get_user_model()
 
-class MemberModelTests(TestCase):
-    
-    def test_member_profile_created_automatically(self):
-        """a
-        SENARYO: Yeni bir User (auth app) kaydedildiğinde, 
-        sistem otomatik olarak ona bağlı bir Member (memberships app) profili oluşturmalı.
-        Bu test, 'Signal' yapısının çalışıp çalışmadığını denetler.
-        """
-        # 1. Kullanıcıyı oluştur
-        user = User.objects.create_user(
-            email="newmember@fitness.com", 
-            password="pass"
-        )
-        
-        # 2. Member profili oluşmuş mu kontrol et
-        # Eğer signal yazmazsak burası patlar (DoesNotExist veya AttributeError verir)
-        self.assertTrue(hasattr(user, 'member'), "Kullanıcı oluşturuldu ama Member profili otomatik oluşmadı!")
-        self.assertIsInstance(user.member, Member)
-        
-        # Varsayılan üyelik tipi 'STANDARD' olmalı
-        self.assertEqual(user.member.membership_type, 'STANDARD')
 
-    def test_update_membership_type(self):
+class MemberModelTests(TestCase):
+
+    def setUp(self):
         """
-        SENARYO: Kullanıcının üyelik tipi 'STUDENT' veya 'PREMIUM' olarak değiştirilebilmeli.
-        Fiyatlandırma motoru bu alanı kullanacak.
+        Her testten önce temiz bir ortam hazırlar.
+        Burada oluşturduğumuz kullanıcı, test veritabanında geçici olarak saklanır.
         """
-        user = User.objects.create_user(email="student@fitness.com", password="pass")
-        
-        # Member profili signal ile oluşmuş olmalı
-        member_profile = user.member
-        
-        # Değişiklik yap
-        member_profile.membership_type = 'STUDENT'
-        member_profile.save()
-        
-        # Veritabanından tazeleyip kontrol et
-        updated_member = Member.objects.get(user=user)
-        self.assertEqual(updated_member.membership_type, 'STUDENT')
+        self.user_email = "testmember@fitness.com"
+        self.user_pass = "securepass123"
+
+        # Kullanıcıyı oluşturuyoruz
+        # create_user kullandığımız için Signal tetiklenmeli ve Member da oluşmalı
+        self.user = User.objects.create_user(
+            email=self.user_email,
+            password=self.user_pass
+        )
+
+    def test_signal_triggering_and_auto_create(self):
+        """
+        TEST 1: Signal Tetiklenme Kontrolü
+        Senaryo: User.objects.create_user() çağrıldığında, 
+        arka planda otomatik olarak bir Member profili oluşmalı.
+        """
+        # Kullanıcının 'member' adında bir ilişkisi var mı?
+        self.assertTrue(
+            hasattr(self.user, 'member'),
+            "HATA: Kullanıcı oluştu ama Member profili otomatik oluşmadı!"
+        )
+
+        # Oluşan obje gerçekten Member sınıfından mı?
+        self.assertIsInstance(self.user.member, Member)
+
+        # Varsayılan üyelik tipi 'STANDARD' mı?
+        self.assertEqual(self.user.member.membership_type, 'STANDARD')
+
+    def test_cascade_delete(self):
+        """
+        TEST 2: Cascade Delete (Veri Temizliği)
+        Senaryo: Ana kullanıcı (User) silindiğinde, 
+        ona bağlı olan Member profili de veritabanından silinmeli.
+        """
+        user_id = self.user.id
+
+        # İlişkili Member profili mevcut mu?
+        self.assertTrue(Member.objects.filter(user_id=user_id).exists())
+
+        # Kullanıcıyı sil
+        self.user.delete()
+
+        # Member profili artık olmamalı
+        with self.assertRaises(Member.DoesNotExist):
+            Member.objects.get(user_id=user_id)
+
+    def test_string_representation(self):
+        """
+        TEST 3: __str__ kontrolü
+        Beklenen format: "email - UYELIK_TIPI"
+        """
+        member = self.user.member
+        expected_string = f"{self.user_email} - STANDARD"
+        self.assertEqual(str(member), expected_string)
+
+    def test_duplicate_prevention_uniqueness(self):
+        """
+        TEST 4: Duplicate Prevention (OneToOne koruması)
+        Bir kullanıcı için ikinci bir Member profili oluşturulursa hata vermeli.
+        """
+        with self.assertRaises(IntegrityError):
+            Member.objects.create(
+                user=self.user,
+                membership_type='PREMIUM'
+            )
+
+    def test_default_active_status(self):
+        """
+        TEST 5: Default Value
+        Yeni oluşturulan bir üye varsayılan olarak 'Aktif' başlamalı.
+        """
+        self.assertTrue(self.user.member.is_active_member)
