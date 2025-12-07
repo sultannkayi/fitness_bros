@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'authorization',
+    'memberships.apps.MembershipsConfig',
+
 ]
 
 MIDDLEWARE = [
