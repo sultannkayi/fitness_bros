@@ -1,89 +1,129 @@
+import logging
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
-
-# Henüz oluşturmadığımız Member modelini import ediyoruz (TDD)
+# TDD: Henüz oluşturmadığımız ama testini yazdığımız Member modelini çağırıyoruz
 from .models import Member
+
+# Loglama ayarları: Konsola çıktı vermek için basit bir yapılandırma
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
-
 class MemberModelTests(TestCase):
-
+    
     def setUp(self):
-        """
-        Her testten önce temiz bir ortam hazırlar.
-        Burada oluşturduğumuz kullanıcı, test veritabanında geçici olarak saklanır.
-        """
+        """Her testten önce çalışır: Temiz ortam ve kullanıcı hazırlığı."""
+        print("\n----------------------------------------------------------------------")
+        print(f"--> TEST BAŞLIYOR: {self._testMethodName}")
+        
         self.user_email = "testmember@fitness.com"
         self.user_pass = "securepass123"
-
-        # Kullanıcıyı oluşturuyoruz
-        # create_user kullandığımız için Signal tetiklenmeli ve Member da oluşmalı
+        
+        # Kullanıcı oluşturuyoruz (Signal burada tetiklenmeli)
         self.user = User.objects.create_user(
-            email=self.user_email,
+            email=self.user_email, 
             password=self.user_pass
         )
+        print(f"    Bilgi: Test kullanıcısı oluşturuldu ({self.user_email})")
+
+    def tearDown(self):
+        """Her testten sonra çalışır."""
+        print(f"--> TEST TAMAMLANDI: {self._testMethodName}")
 
     def test_signal_triggering_and_auto_create(self):
-        """
-        TEST 1: Signal Tetiklenme Kontrolü
-        Senaryo: User.objects.create_user() çağrıldığında, 
-        arka planda otomatik olarak bir Member profili oluşmalı.
-        """
-        # Kullanıcının 'member' adında bir ilişkisi var mı?
-        self.assertTrue(
-            hasattr(self.user, 'member'),
-            "HATA: Kullanıcı oluştu ama Member profili otomatik oluşmadı!"
-        )
+        """Signal mekanizması User oluşunca Member profilini de oluşturuyor mu?"""
+        print("    Adım: Member profilinin varlığı kontrol ediliyor...")
+        
+        if hasattr(self.user, 'member'):
+            print("    BAŞARILI: User objesinde 'member' özelliği bulundu.")
+        else:
+            print("    HATA: User objesinde 'member' özelliği YOK!")
 
-        # Oluşan obje gerçekten Member sınıfından mı?
+        self.assertTrue(hasattr(self.user, 'member'), "HATA: Member profili otomatik oluşmadı!")
         self.assertIsInstance(self.user.member, Member)
-
-        # Varsayılan üyelik tipi 'STANDARD' mı?
         self.assertEqual(self.user.member.membership_type, 'STANDARD')
+        print("    BAŞARILI: Varsayılan üyelik tipi 'STANDARD' olarak doğrulandı.")
 
     def test_cascade_delete(self):
-        """
-        TEST 2: Cascade Delete (Veri Temizliği)
-        Senaryo: Ana kullanıcı (User) silindiğinde, 
-        ona bağlı olan Member profili de veritabanından silinmeli.
-        """
+        """User silinince Member profili de siliniyor mu?"""
         user_id = self.user.id
-
-        # İlişkili Member profili mevcut mu?
-        self.assertTrue(Member.objects.filter(user_id=user_id).exists())
-
-        # Kullanıcıyı sil
+        print(f"    Adım: Kullanıcı (ID: {user_id}) siliniyor...")
+        
         self.user.delete()
-
-        # Member profili artık olmamalı
+        
+        print("    Adım: Member profilinin silindiği doğrulanıyor...")
         with self.assertRaises(Member.DoesNotExist):
             Member.objects.get(user_id=user_id)
+        print("    BAŞARILI: Member profili veritabanından temizlenmiş.")
 
     def test_string_representation(self):
-        """
-        TEST 3: __str__ kontrolü
-        Beklenen format: "email - UYELIK_TIPI"
-        """
+        """__str__ metodu beklenen formatı veriyor mu?"""
         member = self.user.member
-        expected_string = f"{self.user_email} - STANDARD"
-        self.assertEqual(str(member), expected_string)
+        expected = f"{self.user_email} - STANDARD"
+        print(f"    Adım: Beklenen çıktı: '{expected}' vs Gerçekleşen: '{str(member)}'")
+        
+        self.assertEqual(str(member), expected)
+        print("    BAŞARILI: String formatı doğru.")
 
     def test_duplicate_prevention_uniqueness(self):
-        """
-        TEST 4: Duplicate Prevention (OneToOne koruması)
-        Bir kullanıcı için ikinci bir Member profili oluşturulursa hata vermeli.
-        """
-        with self.assertRaises(IntegrityError):
-            Member.objects.create(
-                user=self.user,
-                membership_type='PREMIUM'
-            )
+        """Aynı kullanıcıya ikinci profil eklenmesi engelleniyor mu?"""
+        print("    Adım: Mevcut kullanıcıya ikinci bir Member profili eklenmeye çalışılıyor...")
+        
+        try:
+            with self.assertRaises(IntegrityError):
+                Member.objects.create(user=self.user, membership_type='PREMIUM')
+            print("    BAŞARILI: Sistem ikinci profil oluşturulmasına izin vermedi (IntegrityError yakalandı).")
+        except Exception as e:
+            print(f"    HATA: Beklenmedik bir durum oluştu: {e}")
+            raise e
 
     def test_default_active_status(self):
-        """
-        TEST 5: Default Value
-        Yeni oluşturulan bir üye varsayılan olarak 'Aktif' başlamalı.
-        """
+        """Yeni üye aktif başlıyor mu?"""
+        print(f"    Adım: Üyelik aktiflik durumu: {self.user.member.is_active_member}")
         self.assertTrue(self.user.member.is_active_member)
+        print("    BAŞARILI: Üye aktif durumda.")
+
+
+class MemberIntegrationTests(TestCase):
+    
+    def setUp(self):
+        print("\n----------------------------------------------------------------------")
+        print(f"--> ENTEGRASYON TESTİ BAŞLIYOR: {self._testMethodName}")
+
+    def tearDown(self):
+        print(f"--> ENTEGRASYON TESTİ BİTTİ: {self._testMethodName}")
+
+    def test_user_and_member_are_tightly_coupled(self):
+        """Auth ve Domain modelleri arasındaki sıkı bağı test eder."""
+        print("    Adım: Bağımsız bir User oluşturuluyor...")
+        user = User.objects.create_user(email="integration@fitness.com", password="pass")
+        
+        print("    Adım: Otomatik bağ kontrol ediliyor...")
+        self.assertTrue(hasattr(user, 'member'), "HATA: Otomatik profil oluşmadı!")
+        self.assertIsInstance(user.member, Member)
+        self.assertEqual(user.member.membership_type, 'STANDARD')
+        print("    BAŞARILI: User ve Member etle tırnak gibi bağlı.")
+
+    def test_delete_user_deletes_member(self):
+        """Kök (User) silinince Dal (Member) da silinmeli."""
+        print("    Adım: Test kullanıcısı oluşturuluyor...")
+        user = User.objects.create_user(email="todelete@fitness.com", password="pass")
+        member_id = user.member.id
+        
+        print("    Adım: Kullanıcı siliniyor...")
+        user.delete()
+        
+        print("    Adım: Öksüz veri kontrolü yapılıyor...")
+        with self.assertRaises(Member.DoesNotExist):
+            Member.objects.get(id=member_id)
+        print("    BAŞARILI: Öksüz veri kalmadı.")
+
+    def test_reverse_access_consistency(self):
+        """Member üzerinden User'a erişim."""
+        print("    Adım: Member -> User erişimi deneniyor...")
+        user = User.objects.create_user(email="reverse@fitness.com", password="pass")
+        member = user.member
+        
+        self.assertEqual(member.user.email, "reverse@fitness.com")
+        print(f"    BAŞARILI: Member üzerinden e-mail'e erişildi ({member.user.email}).")
