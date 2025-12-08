@@ -1,5 +1,5 @@
 [tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "fitness_bros_api.settings"
-python_files = ["test_*.py", "*_test.py", "testing/python/*.py"]
-testpaths = ["tests"]
+DJANGO_SETTINGS_MODULE = "main.settings"
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+testpaths = ["tests", "authorization", "memberships"]
 addopts = "--tb=short --strict-markers --disable-warnings"
