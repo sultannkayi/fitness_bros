@@ -15,11 +15,20 @@ class FitnessClassModelTests(TestCase):
         # Yarın için bir tarih ayarla
         self.future_date = timezone.now() + timedelta(days=1)
 
+        # Instructor user eklendi
+        self.instructor_user = User.objects.create_user(
+            email="instructor@test.com",
+            password="123",
+            is_instructor=True
+        )
+        self.instructor_user.first_name = "Jane"
+        self.instructor_user.save()
+
     def test_create_valid_class(self):
         """TEST 1: Geçerli bir ders sorunsuz oluşturulmalı"""
         yoga_class = FitnessClass.objects.create(
             name="Morning Yoga",
-            instructor="Yogi Bear",
+            instructor=self.instructor_user,
             capacity=20,
             date_time=self.future_date,
             base_price=100.00
@@ -35,7 +44,7 @@ class FitnessClassModelTests(TestCase):
         # Senaryo A: 0 Kapasite
         invalid_class = FitnessClass(
             name="Full Class",
-            instructor="Test",
+            instructor=self.instructor_user,
             capacity=0,
             date_time=self.future_date,
             base_price=50
@@ -50,7 +59,7 @@ class FitnessClassModelTests(TestCase):
         
         past_class = FitnessClass(
             name="Past Class",
-            instructor="Time Traveler",
+            instructor=self.instructor_user,
             capacity=10,
             date_time=yesterday,
             base_price=50
@@ -63,7 +72,7 @@ class FitnessClassModelTests(TestCase):
         """TEST 4: __str__ metodu okunabilir olmalı"""
         cls = FitnessClass.objects.create(
             name="Pilates",
-            instructor="Jane",
+            instructor=self.instructor_user,
             capacity=10,
             date_time=self.future_date,
             base_price=200
