@@ -1,17 +1,29 @@
 import { Link } from "react-router-dom";
+import "./Navbar.css";
 
 export default function Navbar() {
   return (
-    <div style={{ padding: "10px", borderBottom: "1px solid #ccc" }}>
-      <Link to="/" style={{ marginRight: "10px" }}>
-        Home
-      </Link>
-      <Link to="/classes" style={{ marginRight: "10px" }}>
-        Classes
-      </Link>
-      <Link to="/reservations">
-        Reservations
-      </Link>
-    </div>
+    <nav className="navbar">
+      <div className="navbar-container">
+        <Link to="/" className="navbar-brand">
+          Fitness <span className="brand-highlight">BROS</span>
+        </Link>
+        
+        <div className="navbar-links">
+          <Link to="/" className="nav-link">
+            Sınıflarımız
+          </Link>
+          <Link to="/classes" className="nav-link">
+            Hakkımızda
+          </Link>
+          <Link to="/reservations" className="nav-link">
+            Bize Ulaşın
+          </Link>
+          <Link to="/login" className="nav-link auth-link">
+            Hesabım
+          </Link>
+        </div>
+      </div>
+    </nav>
   );
 }
