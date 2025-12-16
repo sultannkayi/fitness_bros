@@ -1,4 +1,5 @@
 import "./Home.css";
+import { Link } from "react-router-dom";
 
 export default function Home() {
   // Sınıflar listesi
@@ -88,7 +89,9 @@ export default function Home() {
                   <span className="bullet">•</span> {fitnessClass.name}
                 </h3>
                 <p className="class-description">{fitnessClass.description}</p>
-                <button className="class-cta">HEMEN KATIL</button>
+                <Link to="/reservations">
+                  <button className="class-cta">HEMEN KATIL</button>
+                </Link>
               </div>
             </div>
           ))}
