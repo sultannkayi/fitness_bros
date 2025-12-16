@@ -69,7 +69,7 @@ export default function Home() {
       </section>
 
       {/* Classes Section */}
-      <section className="classes-section">
+      <section id="classes-section" className="classes-section">
         <h2 className="section-title">
           SINIFLARIMIZ
         </h2>

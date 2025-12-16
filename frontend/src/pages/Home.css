@@ -5,6 +5,10 @@
   min-height: 100vh;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 /* Hero Section */
 .hero {
   background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
@@ -68,6 +72,7 @@
   padding: 5rem 2rem;
   background-color: white;
   color: #1a1a1a;
+  scroll-margin-top: 80px; /* Navbar yüksekliği kadar boşluk */
 }
 
 .section-title {

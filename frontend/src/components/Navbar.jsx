@@ -10,9 +10,9 @@ export default function Navbar() {
         </Link>
         
         <div className="navbar-links">
-          <Link to="/" className="nav-link">
+          <a href="/#classes-section" className="nav-link">
             Sınıflarımız
-          </Link>
+          </a>
           <Link to="/classes" className="nav-link">
             Hakkımızda
           </Link>
