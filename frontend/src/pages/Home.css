@@ -421,6 +421,7 @@ html {
   background-color: #0a0a0a;
   padding: 3rem 2rem 1rem;
   color: white;
+  scroll-margin-top: 80px; /* Navbar yüksekliği kadar boşluk */
 }
 
 .footer-content {

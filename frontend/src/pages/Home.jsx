@@ -198,7 +198,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="footer">
+      <footer id="contact-section" className="footer">
         <div className="footer-content">
           <div className="footer-brand">
             <h2 className="footer-logo">
