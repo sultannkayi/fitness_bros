@@ -65,7 +65,9 @@ export default function Home() {
             various equipment, classes, and programs aimed at improving physical health,
             strength, endurance, flexibility, and overall fitness.
           </p>
-          <button className="cta-button">HEMEN KATIL</button>
+          <Link to="/reservations">
+            <button className="cta-button">HEMEN KATIL</button>
+          </Link>
         </div>
       </section>
 
