@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Profile.css";
 
 export default function Profile() {
   const navigate = useNavigate();
   
-  const [userData] = useState({
+  const [userData, setUserData] = useState({
     name: "Leslie Alexander",
     gender: "Male",
     dateOfBirth: "22 may 1995",
@@ -18,6 +18,27 @@ export default function Profile() {
       age: "26 years"
     }
   });
+
+  useEffect(() => {
+    // localStorage'dan kullanıcı bilgilerini çek
+    const storedUserData = localStorage.getItem('userData');
+    if (storedUserData) {
+      const parsedData = JSON.parse(storedUserData);
+      setUserData({
+        name: parsedData.name,
+        gender: parsedData.gender,
+        dateOfBirth: parsedData.dateOfBirth,
+        height: parsedData.height,
+        weight: parsedData.weight,
+        age: parsedData.age,
+        stats: {
+          weight: parsedData.weight,
+          height: parsedData.height,
+          age: parsedData.age
+        }
+      });
+    }
+  }, []);
 
   const handleLogout = () => {
     // Logout işlemleri (localStorage temizleme vs.)

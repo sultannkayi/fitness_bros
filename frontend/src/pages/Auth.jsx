@@ -26,6 +26,8 @@ export default function Auth() {
     e.preventDefault();
     // Backend'e sign in isteği
     console.log("Sign In:", signInData);
+    // Token kaydet
+    localStorage.setItem('token', 'dummy-token');
     // Başarılı girişten sonra profile'a yönlendir
     navigate('/profile');
   };
@@ -34,6 +36,23 @@ export default function Auth() {
     e.preventDefault();
     // Backend'e sign up isteği
     console.log("Sign Up:", signUpData);
+    
+    // Kullanıcı bilgilerini localStorage'a kaydet
+    const userData = {
+      name: `${signUpData.firstName} ${signUpData.lastName}`,
+      firstName: signUpData.firstName,
+      lastName: signUpData.lastName,
+      email: signUpData.email,
+      gender: signUpData.gender === 'male' ? 'Male' : signUpData.gender === 'female' ? 'Female' : 'Other',
+      dateOfBirth: new Date(signUpData.dateOfBirth).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+      height: `${signUpData.height} cm`,
+      weight: `${signUpData.weight} kg`,
+      age: `${new Date().getFullYear() - new Date(signUpData.dateOfBirth).getFullYear()} years`
+    };
+    
+    localStorage.setItem('userData', JSON.stringify(userData));
+    localStorage.setItem('token', 'dummy-token');
+    
     // Başarılı kayıttan sonra profile'a yönlendir
     navigate('/profile');
   };
