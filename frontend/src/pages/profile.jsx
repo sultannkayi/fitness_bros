@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Profile.css";
 
 export default function Profile() {
+  const navigate = useNavigate();
+  
   const [userData] = useState({
     name: "Leslie Alexander",
     gender: "Male",
@@ -16,15 +19,27 @@ export default function Profile() {
     }
   });
 
+  const handleLogout = () => {
+    // Logout işlemleri (localStorage temizleme vs.)
+    localStorage.removeItem('token');
+    // Home sayfasına yönlendir
+    navigate('/');
+  };
+
   return (
     <div className="profile-page">
       <div className="profile-container">
         {/* Left Section - User Info */}
         <div className="profile-left">
           <div className="profile-header">
-            <h1 className="profile-brand">
-              Fitness <span className="brand-orange">BROSS</span>
-            </h1>
+            <div className="profile-header-content">
+              <h1 className="profile-brand">
+                Fitness <span className="brand-orange">BROSS</span>
+              </h1>
+              <button className="logout-button" onClick={handleLogout}>
+                🚪 Çıkış Yap
+              </button>
+            </div>
           </div>
 
           <div className="profile-card">
