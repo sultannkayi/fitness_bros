@@ -19,7 +19,7 @@ export default function Navbar() {
           <Link to="/reservations" className="nav-link">
             Bize Ulaşın
           </Link>
-          <Link to="/login" className="nav-link auth-link">
+          <Link to="/profile" className="nav-link auth-link">
             Hesabım
           </Link>
         </div>
