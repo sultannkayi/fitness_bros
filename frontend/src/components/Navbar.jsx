@@ -13,9 +13,9 @@ export default function Navbar() {
           <a href="/#classes-section" className="nav-link">
             Sınıflarımız
           </a>
-          <Link to="/classes" className="nav-link">
+          <a href="/#about-section" className="nav-link">
             Hakkımızda
-          </Link>
+          </a>
           <Link to="/reservations" className="nav-link">
             Bize Ulaşın
           </Link>

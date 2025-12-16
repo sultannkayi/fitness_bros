@@ -218,6 +218,7 @@ html {
 .about-section {
   padding: 5rem 2rem;
   background-color: #1a1a1a;
+  scroll-margin-top: 80px; /* Navbar yüksekliği kadar boşluk */
 }
 
 .about-content {

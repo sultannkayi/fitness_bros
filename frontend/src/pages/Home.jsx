@@ -96,7 +96,7 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section className="about-section">
+      <section id="about-section" className="about-section">
         <div className="about-content">
           <div className="about-text">
             <h2 className="about-title">
