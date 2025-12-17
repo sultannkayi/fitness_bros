@@ -74,10 +74,18 @@ export default function Profile() {
           <div className="profile-card">
             <div className="profile-avatar-section">
               <div className="profile-avatar">
-                <img 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop" 
-                  alt={userData.name}
-                />
+                {userData.gender === 'Male' ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="8" r="5"/>
+                    <path d="M3 21v-2a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v2"/>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="8" r="5"/>
+                    <path d="M3 21v-2a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v2"/>
+                    <path d="M12 13v-2"/>
+                  </svg>
+                )}
               </div>
               <h2 className="profile-name">{userData.name}</h2>
               <p className="profile-age">{userData.age.split(' ')[0]}</p>
