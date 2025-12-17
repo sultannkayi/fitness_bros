@@ -4,8 +4,6 @@ Business logic for pricing, membership management, and discounts.
 """
 from decimal import Decimal
 from typing import Optional
-from django.utils import timezone
-from datetime import timedelta
 
 
 class PricingService:
@@ -113,10 +111,14 @@ class PricingService:
             Prorated upgrade cost
             
         Raises:
-            ValueError: If downgrade attempted or invalid types
+            ValueError: If downgrade attempted, invalid types, or negative days
         """
         if current_type not in cls.BASE_PRICES or new_type not in cls.BASE_PRICES:
             raise ValueError("Invalid membership type")
+        
+        # Validate remaining days
+        if remaining_days < 0:
+            raise ValueError("Remaining days cannot be negative")
         
         current_price = cls.BASE_PRICES[current_type]
         new_price = cls.BASE_PRICES[new_type]

@@ -86,13 +86,13 @@ class PricingServiceTests(TestCase):
         """Happy path: Calculate upgrade cost from STANDARD to PREMIUM."""
         cost = PricingService.calculate_upgrade_cost('STANDARD', 'PREMIUM', 15)
         # (200-100)/30 * 15 = 3.33 * 15 = 50.00
-        self.assertAlmostEqual(cost, Decimal('50.00'), places=1)
+        self.assertEqual(cost, Decimal('50.00'))
     
     def test_upgrade_cost_student_to_premium(self):
         """Happy path: Calculate upgrade cost from STUDENT to PREMIUM."""
         cost = PricingService.calculate_upgrade_cost('STUDENT', 'PREMIUM', 30)
         # (200-75)/30 * 30 = 125.00
-        self.assertAlmostEqual(cost, Decimal('125.00'), places=1)
+        self.assertEqual(cost, Decimal('125.00'))
     
     def test_upgrade_cost_with_zero_days_remaining(self):
         """Edge case: Zero days remaining should be zero cost."""
