@@ -7,17 +7,17 @@ export default function Home() {
     {
       id: 1,
       name: "Yoga & Esneklik Dersleri",
-      description: "Balance your strength training with guided yoga, breathing, and stretching exercises that improve flexibility, posture, and mental clarity.Balance your strength training with guided yoga, breathing, and stretching exercises that improve flexibility, posture, and mental clarity."
+      description: "Denge, esneklik ve zihinsel netlik kazanmak için rehberli yoga, nefes ve esneme egzersizleriyle antrenmanlarınızı dengeye getirin."
     },
     {
       id: 2,
       name: "Zumba Eğitimi",
-      description: "Motivation multiplies in a crowd! Join our energy-packed group classes for Zumba, circuit training, boxing, and more.Motivation multiplies in a crowd! Join our energy-packed group classes for Zumba, circuit training, boxing, and more."
+      description: "Motivasyon kalabalıkta çoğalır! Zumba, devre antrenmanı, boks ve daha fazlası için enerji dolu grup derslerimize katılın."
     },
     {
       id: 3,
       name: "CrossFit / HIIT Antrenmanları",
-      description: "Burn fat fast and increase stamina with high-intensity interval training and CrossFit-style group sessions. Dynamic, fast-paced, and fun.Burn fat fast and increase stamina with high-intensity interval training and CrossFit-style group sessions. Dynamic, fast-paced, and fun."
+      description: "Yüksek yoğunluklu interval antrenmanı ve CrossFit tarzı grup seanslarıyla hızla yağ yakın ve dayanıklılığınızı artırın. Dinamik, tempolu ve eğlenceli."
     }
   ];
 
@@ -61,9 +61,9 @@ export default function Home() {
             İçindeki Gücü <span className="highlight">SERBEST BIRAK</span>
           </h1>
           <p className="hero-subtitle">
-            A ironfit fitness center is a facility designed to provide individuals with access to
-            various equipment, classes, and programs aimed at improving physical health,
-            strength, endurance, flexibility, and overall fitness.
+            Fitness Bros, bireylere fiziksel sağlık, güç, dayanıklılık, esneklik ve genel fitness'ı 
+            geliştirmeyi amaçlayan çeşitli ekipman, dersler ve programlara erişim sağlamak için 
+            tasarlanmış bir spor merkezidir.
           </p>
           <Link to="/reservations">
             <button className="cta-button">HEMEN KATIL</button>
@@ -108,10 +108,10 @@ export default function Home() {
               <span className="brand">Fitness BROS</span>'la ilgili
             </h2>
             <p className="about-description">
-              At Fitness BROS, we're not just a gym—we're a community. Our mission is to
-              help you crush your goals, whether you're just starting out or a seasoned
-              athlete. From weight training to group classes, our expert trainers and state-
-              of-the-art equipment are here to push your limits.
+              Fitness BROS'ta, sadece bir spor salonu değiliz—bir topluluğuz. Misyonumuz, 
+              ister yeni başlıyor olun ister deneyimli bir sporcu olun, hedeflerinizi aşmanıza 
+              yardımcı olmaktır. Ağırlık antrenmanından grup derslerine kadar, uzman eğitmenlerimiz 
+              ve son teknoloji ekipmanlarımız limitlerini zorlamanız için burada.
             </p>
             
             <div className="features">
@@ -121,9 +121,9 @@ export default function Home() {
                   <h3 className="feature-number">01.</h3>
                   <h4 className="feature-title">24/7 ERİŞİM</h4>
                   <p className="feature-text">
-                    Life is busy — your gym should fit your schedule, not the other way around.
-                    Whether you're an early bird or a night owl, our Fitness is open 24/7, so you
-                    can work out when it works best for you.
+                    Hayat meşgul — spor salonunuz programınıza uymalı, tam tersi değil. 
+                    İster sabahın erken saatlerinde ister gece kuşu olun, salonumuz 7/24 açık, 
+                    böylece size en uygun zamanda çalışabilirsiniz.
                   </p>
                 </div>
               </div>
@@ -134,9 +134,9 @@ export default function Home() {
                   <h3 className="feature-number">02.</h3>
                   <h4 className="feature-title">SERTİFİKALI EĞİTMENLER</h4>
                   <p className="feature-text">
-                    Our team of certified, experienced trainers is here to help you unlock your full
-                    potential. From beginners to athletes, we provide personalized coaching that's
-                    safe, effective, and motivating.
+                    Sertifikalı, deneyimli eğitmen ekibimiz tam potansiyelinizi ortaya çıkarmanıza 
+                    yardımcı olmak için burada. Yeni başlayanlardan sporculara kadar, güvenli, 
+                    etkili ve motive edici kişiselleştirilmiş koçluk sağlıyoruz.
                   </p>
                 </div>
               </div>
@@ -147,9 +147,9 @@ export default function Home() {
                   <h3 className="feature-number">03.</h3>
                   <h4 className="feature-title">TEMİZ & GÜVENLİ ORTAM</h4>
                   <p className="feature-text">
-                    We maintain the highest standards of cleanliness and safety. Our facility is
-                    sanitized daily, and our equipment is regularly inspected and maintained — so
-                    you can focus on your health, worry-free.
+                    En yüksek temizlik ve güvenlik standartlarını koruyoruz. Tesisimiz günlük 
+                    olarak dezenfekte edilir ve ekipmanlarımız düzenli olarak kontrol edilip 
+                    bakımı yapılır — böylece endişesizce sağlığınıza odaklanabilirsiniz.
                   </p>
                 </div>
               </div>
@@ -219,11 +219,11 @@ export default function Home() {
             </div>
             
             <div className="footer-column">
-              <h4 className="footer-title orange">Get In Touch</h4>
+              <h4 className="footer-title orange">İletişim</h4>
               <ul>
                 <li>📍 Sarıçam, Adana</li>
-                <li>📞 Call Us: +91 919 245 07 890</li>
-                <li>✉️ Email Us: info@fitnessbros.com</li>
+                <li>📞 Bizi Arayın: +90 919 245 07 890</li>
+                <li>✉️ E-posta: info@fitnessbros.com</li>
               </ul>
             </div>
           </div>
