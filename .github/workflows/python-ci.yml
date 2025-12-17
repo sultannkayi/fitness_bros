@@ -38,3 +38,27 @@ jobs:
       with:
         name: coverage-report
         path: coverage.xml
+
+    # E-posta bildirimi (sadece hata durumunda)
+    - name: Send email notification on failure
+      if: failure()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.MAIL_USERNAME }}
+        password: ${{ secrets.MAIL_PASSWORD }}
+        subject: "❌ CI Pipeline Failed - ${{ github.repository }}"
+        to: sultankayi01@gmail.com,mmertkaplan01@gmail.com,akinmenge8552@gmail.com
+        # to: email1@example.com,email2@example.com
+        from: GitHub Actions
+        body: |
+          Pipeline failed!
+          
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref }}
+          Commit: ${{ github.sha }}
+          Author: ${{ github.actor }}
+          Workflow: ${{ github.workflow }}
+          
+          Check details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
