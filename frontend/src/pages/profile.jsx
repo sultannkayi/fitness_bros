@@ -19,6 +19,8 @@ export default function Profile() {
     }
   });
 
+  const [reservations, setReservations] = useState([]);
+
   useEffect(() => {
     // localStorage'dan kullanıcı bilgilerini çek
     const storedUserData = localStorage.getItem('userData');
@@ -37,6 +39,12 @@ export default function Profile() {
           age: parsedData.age
         }
       });
+    }
+
+    // Rezervasyonları çek
+    const storedReservations = localStorage.getItem('reservations');
+    if (storedReservations) {
+      setReservations(JSON.parse(storedReservations));
     }
   }, []);
 
@@ -117,9 +125,35 @@ export default function Profile() {
             </div>
 
             <div className="profile-list-section">
-              <p className="list-label">Border</p>
-              <p className="list-value">List</p>
-              <p className="list-number">228</p>
+              <p className="list-label">Rezervasyonlarım</p>
+              
+              {reservations.length > 0 ? (
+                <div className="reservations-list">
+                  {reservations.map((reservation) => (
+                    <div key={reservation.id} className="reservation-item">
+                      <div className="reservation-header">
+                        <h4 className="reservation-class-name">{reservation.className}</h4>
+                        <span className={`reservation-status ${reservation.status === 'Onaylandı' ? 'confirmed' : ''}`}>
+                          {reservation.status}
+                        </span>
+                      </div>
+                      <p className="reservation-instructor">👤 Eğitmen: {reservation.instructor}</p>
+                      <div className="reservation-details">
+                        <span className="reservation-day">📅 {reservation.day}</span>
+                        <span className="reservation-time">🕐 {reservation.time}</span>
+                      </div>
+                      <p className="reservation-date">Rezervasyon Tarihi: {reservation.date}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-reservations">
+                  <p>Henüz rezervasyonunuz bulunmamaktadır.</p>
+                  <button className="go-to-reservations" onClick={() => navigate('/reservations')}>
+                    Rezervasyon Yap
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
