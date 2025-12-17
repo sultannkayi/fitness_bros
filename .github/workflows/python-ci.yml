@@ -39,6 +39,22 @@ jobs:
         name: coverage-report
         path: coverage.xml
 
+    # Frontend testleri
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm install
+
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+
     # E-posta bildirimi (sadece hata durumunda)
     - name: Send email notification on failure
       if: failure()

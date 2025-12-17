@@ -81,6 +81,14 @@
   overflow: hidden;
   margin: 0 auto 1rem;
   border: 4px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.profile-avatar svg {
+  color: white;
 }
 
 .profile-avatar img {
@@ -303,4 +311,104 @@
   .gym-subtext {
     font-size: 1.2rem;
   }
+}
+
+/* Rezervasyon Listesi Stilleri */
+.reservations-list {
+  margin-top: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.reservation-item {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #ff5722;
+  transition: all 0.3s;
+}
+
+.reservation-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.reservation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.reservation-class-name {
+  font-size: 1.2rem;
+  color: #333;
+  margin: 0;
+  font-weight: bold;
+}
+
+.reservation-status {
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.reservation-status.confirmed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.reservation-instructor {
+  color: #555;
+  font-size: 0.95rem;
+  margin: 0.5rem 0;
+}
+
+.reservation-details {
+  display: flex;
+  gap: 1.5rem;
+  margin: 0.8rem 0;
+}
+
+.reservation-day,
+.reservation-time {
+  color: #667eea;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.reservation-date {
+  color: #999;
+  font-size: 0.85rem;
+  margin: 0.5rem 0 0;
+}
+
+.no-reservations {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+}
+
+.no-reservations p {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+}
+
+.go-to-reservations {
+  background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.go-to-reservations:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(255, 87, 34, 0.4);
 }

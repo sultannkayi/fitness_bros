@@ -19,6 +19,8 @@ export default function Profile() {
     }
   });
 
+  const [reservations, setReservations] = useState([]);
+
   useEffect(() => {
     // localStorage'dan kullanıcı bilgilerini çek
     const storedUserData = localStorage.getItem('userData');
@@ -37,6 +39,12 @@ export default function Profile() {
           age: parsedData.age
         }
       });
+    }
+
+    // Rezervasyonları çek
+    const storedReservations = localStorage.getItem('reservations');
+    if (storedReservations) {
+      setReservations(JSON.parse(storedReservations));
     }
   }, []);
 
@@ -66,10 +74,18 @@ export default function Profile() {
           <div className="profile-card">
             <div className="profile-avatar-section">
               <div className="profile-avatar">
-                <img 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop" 
-                  alt={userData.name}
-                />
+                {userData.gender === 'Male' ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="8" r="5"/>
+                    <path d="M3 21v-2a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v2"/>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="8" r="5"/>
+                    <path d="M3 21v-2a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v2"/>
+                    <path d="M12 13v-2"/>
+                  </svg>
+                )}
               </div>
               <h2 className="profile-name">{userData.name}</h2>
               <p className="profile-age">{userData.age.split(' ')[0]}</p>
@@ -117,9 +133,35 @@ export default function Profile() {
             </div>
 
             <div className="profile-list-section">
-              <p className="list-label">Border</p>
-              <p className="list-value">List</p>
-              <p className="list-number">228</p>
+              <p className="list-label">Rezervasyonlarım</p>
+              
+              {reservations.length > 0 ? (
+                <div className="reservations-list">
+                  {reservations.map((reservation) => (
+                    <div key={reservation.id} className="reservation-item">
+                      <div className="reservation-header">
+                        <h4 className="reservation-class-name">{reservation.className}</h4>
+                        <span className={`reservation-status ${reservation.status === 'Onaylandı' ? 'confirmed' : ''}`}>
+                          {reservation.status}
+                        </span>
+                      </div>
+                      <p className="reservation-instructor">👤 Eğitmen: {reservation.instructor}</p>
+                      <div className="reservation-details">
+                        <span className="reservation-day">📅 {reservation.day}</span>
+                        <span className="reservation-time">🕐 {reservation.time}</span>
+                      </div>
+                      <p className="reservation-date">Rezervasyon Tarihi: {reservation.date}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="no-reservations">
+                  <p>Henüz rezervasyonunuz bulunmamaktadır.</p>
+                  <button className="go-to-reservations" onClick={() => navigate('/reservations')}>
+                    Rezervasyon Yap
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
