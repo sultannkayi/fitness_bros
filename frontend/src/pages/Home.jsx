@@ -2,6 +2,9 @@ import "./Home.css";
 import { Link } from "react-router-dom";
 
 export default function Home() {
+  // Test için kasıtlı syntax hatası - pipeline test
+  const testVariable = undefinedFunction();
+  
   // Sınıflar listesi
   const classes = [
     {
