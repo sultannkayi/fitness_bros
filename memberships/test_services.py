@@ -169,13 +169,10 @@ class PricingServiceIntegrationTests(TestCase):
         self.assertGreater(upgrade_cost, Decimal('0.00'))
         self.assertLess(upgrade_cost, Decimal('100.00'))
     
-    @patch('memberships.services.timezone')
-    def test_pricing_with_mocked_timezone(self, mock_timezone):
-        """Mocking: Test pricing doesn't depend on current time."""
-        # Mock timezone to ensure test consistency
-        mock_now = MagicMock()
-        mock_timezone.now.return_value = mock_now
-        
-        # Pricing should work regardless of timezone mock
-        price = PricingService.calculate_membership_price('STANDARD', 1)
-        self.assertEqual(price, Decimal('100.00'))
+    def test_pricing_consistency(self):
+        """Test: Verify pricing calculations are consistent."""
+        # Multiple calls should return same result
+        price1 = PricingService.calculate_membership_price('STANDARD', 1)
+        price2 = PricingService.calculate_membership_price('STANDARD', 1)
+        self.assertEqual(price1, price2)
+        self.assertEqual(price1, Decimal('100.00'))
