@@ -78,6 +78,7 @@ jobs:
           Workflow: ${{ github.workflow }}
           
           Check details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
     - name: Run mutation tests
       run: |
         pip install mutmut
@@ -85,4 +86,3 @@ jobs:
         mutmut run --paths-to-mutate=memberships/services.py,reservations/services.py
         mutmut results
       continue-on-error: true
-        path: coverage.xml
