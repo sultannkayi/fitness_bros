@@ -300,4 +300,20 @@
   .schedule-availability {
     text-align: left;
   }
+
+  .reservation-button {
+  margin-top: 16px;
+  padding: 12px 20px;
+  background-color: #ff7a00;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.reservation-button:hover {
+  background-color: #e66e00;
+}
+
 }

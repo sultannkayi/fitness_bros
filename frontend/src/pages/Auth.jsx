@@ -4,8 +4,8 @@ import "./Auth.css";
 
 export default function Auth() {
   const navigate = useNavigate();
-  const [isSignUp, setIsSignUp] = useState(false); // false = Sign In ilk gelir
-  
+  const [isSignUp, setIsSignUp] = useState(false);
+
   const [signInData, setSignInData] = useState({
     email: "",
     password: ""
@@ -23,38 +23,52 @@ export default function Auth() {
   });
 
   const handleSignInSubmit = (e) => {
-    e.preventDefault();
-    // Backend'e sign in isteği
-    console.log("Sign In:", signInData);
-    // Token kaydet
-    localStorage.setItem('token', 'dummy-token');
-    // Başarılı girişten sonra profile'a yönlendir
-    navigate('/profile');
-  };
+  e.preventDefault();
+
+  const storedUser = JSON.parse(localStorage.getItem("userData"));
+
+  if (!storedUser) {
+    alert("Kullanıcı bulunamadı");
+    return;
+  }
+
+  const input = signInData.email;
+  const passwordMatch = storedUser.password === signInData.password;
+
+  const nameMatch = storedUser.name === input;
+  const emailMatch = storedUser.email.toLowerCase() === input.toLowerCase();
+
+  if ((nameMatch || emailMatch) && passwordMatch) {
+    localStorage.setItem("token", "dummy-token");
+    navigate("/profile");
+  } else {
+    alert("Giriş bilgileri hatalı");
+  }
+};
 
   const handleSignUpSubmit = (e) => {
     e.preventDefault();
-    // Backend'e sign up isteği
-    console.log("Sign Up:", signUpData);
-    
-    // Kullanıcı bilgilerini localStorage'a kaydet
+
     const userData = {
-      name: `${signUpData.firstName} ${signUpData.lastName}`,
-      firstName: signUpData.firstName,
-      lastName: signUpData.lastName,
-      email: signUpData.email,
-      gender: signUpData.gender === 'male' ? 'Male' : signUpData.gender === 'female' ? 'Female' : 'Other',
-      dateOfBirth: new Date(signUpData.dateOfBirth).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-      height: `${signUpData.height} cm`,
-      weight: `${signUpData.weight} kg`,
-      age: `${new Date().getFullYear() - new Date(signUpData.dateOfBirth).getFullYear()} years`
-    };
-    
-    localStorage.setItem('userData', JSON.stringify(userData));
-    localStorage.setItem('token', 'dummy-token');
-    
-    // Başarılı kayıttan sonra profile'a yönlendir
-    navigate('/profile');
+  name: `${signUpData.firstName} ${signUpData.lastName}`,
+  username: `${signUpData.firstName.toLowerCase()}${signUpData.lastName.toLowerCase()}`,
+  email: signUpData.email,
+  password: signUpData.password,
+  gender: signUpData.gender === 'male' ? 'Male' : signUpData.gender === 'female' ? 'Female' : 'Other',
+  dateOfBirth: new Date(signUpData.dateOfBirth).toLocaleDateString(
+    'en-GB',
+    { day: 'numeric', month: 'short', year: 'numeric' }
+  ),
+  height: `${signUpData.height} cm`,
+  weight: `${signUpData.weight} kg`,
+  age: `${new Date().getFullYear() - new Date(signUpData.dateOfBirth).getFullYear()} years`
+};
+
+
+    localStorage.setItem("userData", JSON.stringify(userData));
+    localStorage.setItem("token", "dummy-token");
+
+    navigate("/profile");
   };
 
   return (
@@ -68,13 +82,13 @@ export default function Auth() {
         </div>
 
         <div className="auth-toggle">
-          <button 
+          <button
             className={`toggle-btn ${!isSignUp ? 'active' : ''}`}
             onClick={() => setIsSignUp(false)}
           >
             Giriş Yap
           </button>
-          <button 
+          <button
             className={`toggle-btn ${isSignUp ? 'active' : ''}`}
             onClick={() => setIsSignUp(true)}
           >
@@ -83,10 +97,9 @@ export default function Auth() {
         </div>
 
         {!isSignUp ? (
-          // Sign In Form
           <form className="auth-form" onSubmit={handleSignInSubmit}>
             <h2 className="form-title">Giriş Yap</h2>
-            
+
             <div className="form-group">
               <label htmlFor="signin-email">E-posta / Kullanıcı Adı</label>
               <input
@@ -116,15 +129,14 @@ export default function Auth() {
             </button>
 
             <p className="form-footer">
-              Hesabınız yok mu? 
+              Hesabınız yok mu?
               <span className="link" onClick={() => setIsSignUp(true)}> Kayıt Ol</span>
             </p>
           </form>
         ) : (
-          // Sign Up Form
           <form className="auth-form" onSubmit={handleSignUpSubmit}>
             <h2 className="form-title">Kayıt Ol</h2>
-            
+
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="signup-firstname">İsim *</label>
@@ -212,8 +224,6 @@ export default function Auth() {
                   onChange={(e) => setSignUpData({...signUpData, height: e.target.value})}
                   placeholder="175"
                   required
-                  min="100"
-                  max="250"
                 />
               </div>
 
@@ -226,8 +236,6 @@ export default function Auth() {
                   onChange={(e) => setSignUpData({...signUpData, weight: e.target.value})}
                   placeholder="70"
                   required
-                  min="30"
-                  max="300"
                 />
               </div>
             </div>
@@ -237,7 +245,7 @@ export default function Auth() {
             </button>
 
             <p className="form-footer">
-              Zaten hesabınız var mı? 
+              Zaten hesabınız var mı?
               <span className="link" onClick={() => setIsSignUp(false)}> Giriş Yap</span>
             </p>
           </form>
