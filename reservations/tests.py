@@ -1,252 +1,997 @@
-import json
 from datetime import timedelta
-from unittest.mock import patch
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-from django.db.utils import IntegrityError
+from django. core.exceptions import ValidationError
+from django.db. utils import IntegrityError
 from rest_framework.test import APIClient
 from rest_framework import status
 
-# Diğer uygulamalardan modelleri çağırıyoruz (Cross-App Integration)
 from classes.models import FitnessClass
 from memberships.models import Member
-
-# HENÜZ OLMAYAN (TDD) Modül ve Servisleri çağırıyoruz
-from .models import Reservation
-from .services import PricingEngine
+from . models import Reservation
+from .services import PricingEngine, ReservationService, CapacityCalculator
 
 User = get_user_model()
 
-class PricingEngineUnitTests(TestCase):
-    """
-    BÖLÜM 1: MANTIK TESTLERİ (UNIT TEST)
-    Veritabanına gitmeden, sadece fiyat hesaplama algoritmasını (Business Logic) test eder.
-    PDF Madde 4.4 ve 5.5 (Decision Tables) gereksinimlerini karşılar.
-    """
+
+class ReservationModelFieldTests(TestCase):
 
     def setUp(self):
-        self.base_price = Decimal('100.00')
-
-    def test_standard_member_low_occupancy(self):
-        """Senaryo 1: Standart üye + Boş sınıf = Taban Fiyat"""
-        calculated_price = PricingEngine.calculate_price(
-            base_price=self.base_price,
-            membership_type='STANDARD',
-            occupancy_rate=0.10,  # %10 dolu
-            is_peak_hour=False
+        self.instructor = User.objects.create_user(
+            email="instructor@test.com",
+            password="testpass123",
+            is_instructor=True
         )
-        self.assertEqual(calculated_price, Decimal('100.00'))
+        self.user = User.objects.create_user(
+            email="member@test.com",
+            password="testpass123"
+        )
+        self.future_date = timezone.now() + timedelta(days=2)
+        self.fitness_class = FitnessClass.objects.create(
+            name="Test Class",
+            instructor=self.instructor,
+            capacity=20,
+            date_time=self.future_date,
+            base_price=Decimal("100.00")
+        )
 
-    def test_premium_member_discount(self):
-        """Senaryo 2: Premium üye her zaman %20 indirim alır"""
-        calculated_price = PricingEngine.calculate_price(
+    def test_reservation_has_member_field(self):
+        reservation = Reservation.objects.create(
+            member=self.user. member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        self.assertEqual(reservation.member, self.user.member)
+
+    def test_reservation_has_fitness_class_field(self):
+        reservation = Reservation.objects.create(
+            member=self.user.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        self.assertEqual(reservation.fitness_class, self.fitness_class)
+
+    def test_reservation_has_price_paid_field(self):
+        reservation = Reservation.objects.create(
+            member=self.user.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("85.50")
+        )
+        self.assertEqual(reservation.price_paid, Decimal("85.50"))
+
+    def test_reservation_has_created_at_field(self):
+        reservation = Reservation.objects.create(
+            member=self.user. member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        self.assertIsNotNone(reservation.created_at)
+
+    def test_price_paid_allows_null(self):
+        reservation = Reservation(
+            member=self.user. member,
+            fitness_class=self.fitness_class,
+            price_paid=None
+        )
+        reservation.save()
+        self.assertIsNotNone(reservation.price_paid)
+
+    def test_created_at_auto_populates(self):
+        reservation = Reservation.objects.create(
+            member=self.user.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        self.assertIsNotNone(reservation.created_at)
+        self.assertLessEqual(reservation.created_at, timezone.now())
+
+    def test_price_paid_accepts_zero(self):
+        reservation = Reservation.objects.create(
+            member=self.user.member,
+            fitness_class=self. fitness_class,
+            price_paid=Decimal("0.00")
+        )
+        self.assertEqual(reservation.price_paid, Decimal("0.00"))
+
+
+class ReservationModelRelationshipTests(TestCase):
+
+    def setUp(self):
+        self.instructor = User.objects. create_user(
+            email="instructor@test.com",
+            password="testpass123",
+            is_instructor=True
+        )
+        self.user = User. objects.create_user(
+            email="member@test.com",
+            password="testpass123"
+        )
+        self.future_date = timezone.now() + timedelta(days=2)
+        self.fitness_class = FitnessClass.objects.create(
+            name="Test Class",
+            instructor=self.instructor,
+            capacity=20,
+            date_time=self.future_date,
+            base_price=Decimal("100.00")
+        )
+
+    def test_reservation_member_foreign_key(self):
+        reservation = Reservation.objects.create(
+            member=self.user. member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        self.assertEqual(reservation.member. user. email, "member@test.com")
+
+    def test_reservation_fitness_class_foreign_key(self):
+        reservation = Reservation. objects.create(
+            member=self.user.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        self.assertEqual(reservation.fitness_class.name, "Test Class")
+
+    def test_member_can_access_reservations_via_related_name(self):
+        Reservation.objects.create(
+            member=self.user.member,
+            fitness_class=self. fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        reservations = self.user.member.reservations. all()
+        self.assertEqual(reservations.count(), 1)
+
+    def test_fitness_class_can_access_reservations_via_related_name(self):
+        Reservation.objects.create(
+            member=self.user. member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        reservations = self.fitness_class.reservations.all()
+        self.assertEqual(reservations.count(), 1)
+
+    def test_reservation_cascade_delete_on_member_delete(self):
+        reservation = Reservation.objects.create(
+            member=self.user. member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        reservation_id = reservation.id
+        self.user.delete()
+        self.assertFalse(Reservation.objects.filter(id=reservation_id).exists())
+
+    def test_reservation_cascade_delete_on_fitness_class_delete(self):
+        reservation = Reservation.objects.create(
+            member=self.user.member,
+            fitness_class=self. fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        reservation_id = reservation.id
+        self.fitness_class.delete()
+        self.assertFalse(Reservation.objects.filter(id=reservation_id).exists())
+
+
+class ReservationModelConstraintTests(TestCase):
+
+    def setUp(self):
+        self.instructor = User.objects. create_user(
+            email="instructor@test.com",
+            password="testpass123",
+            is_instructor=True
+        )
+        self.user1 = User.objects.create_user(
+            email="member1@test.com",
+            password="testpass123"
+        )
+        self.user2 = User.objects.create_user(
+            email="member2@test.com",
+            password="testpass123"
+        )
+        self.user3 = User.objects.create_user(
+            email="member3@test.com",
+            password="testpass123"
+        )
+        self.future_date = timezone.now() + timedelta(days=2)
+        self.fitness_class = FitnessClass.objects.create(
+            name="Small Class",
+            instructor=self. instructor,
+            capacity=2,
+            date_time=self.future_date,
+            base_price=Decimal("100.00")
+        )
+
+    def test_unique_member_class_reservation_constraint(self):
+        Reservation.objects.create(
+            member=self.user1.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        with self.assertRaises(IntegrityError):
+            Reservation.objects.create(
+                member=self.user1.member,
+                fitness_class=self.fitness_class,
+                price_paid=Decimal("100.00")
+            )
+
+    def test_capacity_enforcement_raises_validation_error(self):
+        Reservation.objects.create(
+            member=self.user1.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        Reservation.objects.create(
+            member=self.user2.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        with self.assertRaises(ValidationError):
+            reservation = Reservation(
+                member=self.user3.member,
+                fitness_class=self.fitness_class,
+                price_paid=Decimal("100.00")
+            )
+            reservation.full_clean()
+            reservation.save()
+
+    def test_capacity_enforcement_allows_booking_when_spots_available(self):
+        reservation = Reservation(
+            member=self.user1.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        reservation.full_clean()
+        reservation.save()
+        self.assertTrue(Reservation.objects.filter(id=reservation.id).exists())
+
+    def test_capacity_enforcement_excludes_self_on_update(self):
+        reservation = Reservation.objects.create(
+            member=self.user1.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        Reservation.objects.create(
+            member=self.user2.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        reservation.price_paid = Decimal("90.00")
+        reservation.full_clean()
+        reservation.save()
+        self.assertEqual(reservation.price_paid, Decimal("90.00"))
+
+
+class ReservationModelAutoCalculationTests(TestCase):
+
+    def setUp(self):
+        self.instructor = User.objects.create_user(
+            email="instructor@test.com",
+            password="testpass123",
+            is_instructor=True
+        )
+        self.user = User.objects. create_user(
+            email="member@test.com",
+            password="testpass123"
+        )
+        self.future_date = timezone.now() + timedelta(days=2)
+        self.future_date = self.future_date.replace(hour=10, minute=0)
+        self.fitness_class = FitnessClass.objects. create(
+            name="Test Class",
+            instructor=self.instructor,
+            capacity=20,
+            date_time=self.future_date,
+            base_price=Decimal("100.00")
+        )
+
+    def test_save_calculates_price_when_price_paid_is_none(self):
+        reservation = Reservation(
+            member=self.user. member,
+            fitness_class=self.fitness_class,
+            price_paid=None
+        )
+        reservation.save()
+        self.assertIsNotNone(reservation.price_paid)
+        self.assertGreater(reservation.price_paid, Decimal("0.00"))
+
+    def test_save_preserves_explicit_price_paid(self):
+        reservation = Reservation(
+            member=self.user.member,
+            fitness_class=self. fitness_class,
+            price_paid=Decimal("75.00")
+        )
+        reservation.save()
+        self.assertEqual(reservation.price_paid, Decimal("75.00"))
+
+
+class PricingEngineTests(TestCase):
+
+    def setUp(self):
+        self.base_price = Decimal("100.00")
+
+    def test_standard_member_no_discount(self):
+        price = PricingEngine.calculate_price(
             base_price=self.base_price,
-            membership_type='PREMIUM',
+            membership_type="STANDARD",
             occupancy_rate=0.10,
             is_peak_hour=False
         )
-        # 100 * 0.80 = 80
-        self.assertEqual(calculated_price, Decimal('80.00'))
+        self.assertEqual(price, Decimal("100.00"))
 
-    def test_surge_pricing_high_occupancy(self):
-        """Senaryo 3: Doluluk %80'in üzerindeyse %50 zam (Surge Pricing)"""
-        calculated_price = PricingEngine.calculate_price(
+    def test_premium_member_20_percent_discount(self):
+        price = PricingEngine. calculate_price(
             base_price=self.base_price,
-            membership_type='STANDARD',
-            occupancy_rate=0.85,  # %85 dolu (Kritik Eşik)
+            membership_type="PREMIUM",
+            occupancy_rate=0.10,
             is_peak_hour=False
         )
-        # 100 * 1.50 = 150
-        self.assertEqual(calculated_price, Decimal('150.00'))
+        self.assertEqual(price, Decimal("80.00"))
 
-    def test_peak_hour_pricing(self):
-        """Senaryo 4: Yoğun saatlerde (Peak Hour) taban fiyata %25 zam gelir"""
-        calculated_price = PricingEngine.calculate_price(
+    def test_student_member_50_percent_discount(self):
+        price = PricingEngine. calculate_price(
             base_price=self.base_price,
-            membership_type='STANDARD',
-            occupancy_rate=0.50,
-            is_peak_hour=True  # Yoğun saat
+            membership_type="STUDENT",
+            occupancy_rate=0.10,
+            is_peak_hour=False
         )
-        # 100 * 1.25 = 125
-        self.assertEqual(calculated_price, Decimal('125.00'))
+        self.assertEqual(price, Decimal("50.00"))
 
-    def test_complex_scenario_student_and_surge(self):
-        """
-        Senaryo 5 (Kombinatoryal): Öğrenci (%50 indirim) + Çok Dolu (%50 zam).
-        Matematik: 100 * 0.5 (Öğrenci) = 50. Sonra 50 * 1.5 (Surge) = 75.
-        (Sıralama iş mantığında belirlenecek, test bunu sabitler)
-        """
-        calculated_price = PricingEngine.calculate_price(
+    def test_occupancy_below_80_no_surge(self):
+        price = PricingEngine.calculate_price(
+            base_price=self. base_price,
+            membership_type="STANDARD",
+            occupancy_rate=0.79,
+            is_peak_hour=False
+        )
+        self.assertEqual(price, Decimal("100.00"))
+
+    def test_occupancy_at_80_triggers_surge(self):
+        price = PricingEngine.calculate_price(
             base_price=self.base_price,
-            membership_type='STUDENT',
+            membership_type="STANDARD",
+            occupancy_rate=0.80,
+            is_peak_hour=False
+        )
+        self.assertEqual(price, Decimal("150.00"))
+
+    def test_occupancy_above_80_triggers_surge(self):
+        price = PricingEngine.calculate_price(
+            base_price=self. base_price,
+            membership_type="STANDARD",
             occupancy_rate=0.90,
             is_peak_hour=False
         )
-        self.assertEqual(calculated_price, Decimal('75.00'))
+        self.assertEqual(price, Decimal("150.00"))
 
-
-class ReservationModelTests(TestCase):
-    """
-    BÖLÜM 2: MODEL VE DATABASE TESTLERİ (INTEGRATION)
-    Kapasite kontrolü, mükerrer kayıt engelleme gibi veritabanı kısıtlarını test eder.
-    PDF Madde 4.3 (Capacity Control)
-    """
-
-    def setUp(self):
-        # 1. Eğitmen
-        self.instructor = User.objects.create_user(email="coach@fit.com", password="pass", is_instructor=True)
-        
-        # 2. Ders (Kapasite: 2 kişi - Sınır testi için küçük verdik)
-        self.future_time = timezone.now() + timedelta(days=1)
-        self.fitness_class = FitnessClass.objects.create(
-            name="Tiny Yoga Class",
-            instructor=self.instructor,
-            capacity=2,
-            date_time=self.future_time,
-            base_price=Decimal('100.00')
+    def test_off_peak_no_surcharge(self):
+        price = PricingEngine.calculate_price(
+            base_price=self.base_price,
+            membership_type="STANDARD",
+            occupancy_rate=0.10,
+            is_peak_hour=False
         )
+        self.assertEqual(price, Decimal("100.00"))
 
-        # 3. İki farklı üye
-        self.user1 = User.objects.create_user(email="user1@fit.com", password="pass")
-        self.user2 = User.objects.create_user(email="user2@fit.com", password="pass")
-        self.user3 = User.objects.create_user(email="user3@fit.com", password="pass")
-
-    def test_capacity_enforcement(self):
-        """
-        KRİTİK TEST: Kapasite dolduğunda 3. kişi rezervasyon yapamamalı.
-        """
-        # 1. Kişi Rezervasyonu
-        Reservation.objects.create(member=self.user1.member, fitness_class=self.fitness_class)
-        
-        # 2. Kişi Rezervasyonu (Kapasite Doldu)
-        Reservation.objects.create(member=self.user2.member, fitness_class=self.fitness_class)
-        
-        # 3. Kişi Denemesi -> HATA VERMELİ (ValidationError)
-        with self.assertRaises(ValidationError):
-            res = Reservation(member=self.user3.member, fitness_class=self.fitness_class)
-            res.full_clean() # Model validasyonunu tetikle
-            res.save()
-
-    def test_prevent_double_booking(self):
-        """
-        Senaryo: Aynı kullanıcı aynı derse iki kere rezervasyon yapamaz.
-        """
-        # İlk kayıt başarılı
-        Reservation.objects.create(member=self.user1.member, fitness_class=self.fitness_class)
-        
-        # İkinci kayıt denemesi -> IntegrityError (UniqueConstraint)
-        with self.assertRaises(IntegrityError):
-            Reservation.objects.create(member=self.user1.member, fitness_class=self.fitness_class)
-
-    def test_price_is_frozen_at_booking(self):
-        """
-        Senaryo: Rezervasyon anındaki fiyat veritabanına kaydedilmeli.
-        Sonradan ders fiyatı değişse bile, kullanıcının ödediği (price_paid) değişmemeli.
-        """
-        # Fiyatı hesapla ve kaydet
-        res = Reservation.objects.create(
-            member=self.user1.member, 
-            fitness_class=self.fitness_class,
-            price_paid=Decimal('90.00')
+    def test_peak_hour_triggers_surcharge(self):
+        price = PricingEngine.calculate_price(
+            base_price=self.base_price,
+            membership_type="STANDARD",
+            occupancy_rate=0.10,
+            is_peak_hour=True
         )
-        
-        # Dersin fiyatını güncelle
-        self.fitness_class.base_price = Decimal('500.00')
-        self.fitness_class.save()
-        
-        # Rezervasyondaki fiyat hala 90 olmalı
-        res.refresh_from_db()
-        self.assertEqual(res.price_paid, Decimal('90.00'))
+        self.assertEqual(price, Decimal("125.00"))
+
+    def test_combined_premium_and_surge(self):
+        price = PricingEngine.calculate_price(
+            base_price=self.base_price,
+            membership_type="PREMIUM",
+            occupancy_rate=0.85,
+            is_peak_hour=False
+        )
+        self.assertEqual(price, Decimal("120.00"))
+
+    def test_combined_student_surge_and_peak(self):
+        price = PricingEngine.calculate_price(
+            base_price=self. base_price,
+            membership_type="STUDENT",
+            occupancy_rate=0.90,
+            is_peak_hour=True
+        )
+        self.assertEqual(price, Decimal("93.75"))
+
+    def test_price_quantized_to_two_decimals(self):
+        price = PricingEngine.calculate_price(
+            base_price=Decimal("33.33"),
+            membership_type="PREMIUM",
+            occupancy_rate=0.10,
+            is_peak_hour=False
+        )
+        self.assertEqual(price, Decimal("26.66"))
 
 
-class ReservationAPITests(TestCase):
-    """
-    BÖLÜM 3: END-TO-END API TESTLERİ
-    Kullanıcı arayüzünden (React/Postman) gelen istekleri simüle eder.
-    PDF Madde 5.4 (Integration and API Testing)
-    """
+class ReservationServiceValidationTests(TestCase):
+
+    @patch("reservations.services.timezone.now")
+    def test_validate_future_class_passes(self, mock_now):
+        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
+        class_time = timezone.datetime(2025, 6, 16, 10, 0, 0, tzinfo=timezone.utc)
+        is_valid, error = ReservationService.validate_reservation_time(class_time)
+        self.assertTrue(is_valid)
+        self.assertEqual(error, "")
+
+    @patch("reservations.services.timezone.now")
+    def test_validate_past_class_fails(self, mock_now):
+        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
+        class_time = timezone. datetime(2025, 6, 14, 10, 0, 0, tzinfo=timezone.utc)
+        is_valid, error = ReservationService.validate_reservation_time(class_time)
+        self.assertFalse(is_valid)
+        self.assertIn("past", error. lower())
+
+    @patch("reservations.services.timezone.now")
+    def test_validate_class_less_than_1_hour_fails(self, mock_now):
+        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
+        class_time = timezone.datetime(2025, 6, 15, 10, 30, 0, tzinfo=timezone.utc)
+        is_valid, error = ReservationService.validate_reservation_time(class_time)
+        self.assertFalse(is_valid)
+        self.assertIn("1 hour", error.lower())
+
+    @patch("reservations.services.timezone.now")
+    def test_validate_class_more_than_30_days_fails(self, mock_now):
+        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
+        class_time = timezone.datetime(2025, 7, 20, 10, 0, 0, tzinfo=timezone.utc)
+        is_valid, error = ReservationService.validate_reservation_time(class_time)
+        self.assertFalse(is_valid)
+        self.assertIn("30 days", error.lower())
+
+
+class ReservationServiceCancellationTests(TestCase):
+
+    @patch("reservations.services.timezone.now")
+    def test_cancellation_fee_free_over_24_hours(self, mock_now):
+        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
+        class_time = timezone.datetime(2025, 6, 17, 10, 0, 0, tzinfo=timezone.utc)
+        fee = ReservationService.calculate_cancellation_fee(
+            original_price=Decimal("100.00"),
+            class_datetime=class_time
+        )
+        self.assertEqual(fee, Decimal("0.00"))
+
+    @patch("reservations.services.timezone.now")
+    def test_cancellation_fee_50_percent_12_to_24_hours(self, mock_now):
+        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone. utc)
+        class_time = timezone.datetime(2025, 6, 15, 28, 0, 0, tzinfo=timezone.utc)
+        class_time = timezone.datetime(2025, 6, 16, 4, 0, 0, tzinfo=timezone.utc)
+        fee = ReservationService. calculate_cancellation_fee(
+            original_price=Decimal("100.00"),
+            class_datetime=class_time
+        )
+        self.assertEqual(fee, Decimal("50.00"))
+
+    @patch("reservations.services.timezone.now")
+    def test_cancellation_fee_100_percent_under_12_hours(self, mock_now):
+        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
+        class_time = timezone.datetime(2025, 6, 15, 16, 0, 0, tzinfo=timezone.utc)
+        fee = ReservationService.calculate_cancellation_fee(
+            original_price=Decimal("100.00"),
+            class_datetime=class_time
+        )
+        self.assertEqual(fee, Decimal("100.00"))
+
+    def test_cancellation_with_custom_time(self):
+        class_time = timezone.datetime(2025, 6, 20, 10, 0, 0, tzinfo=timezone.utc)
+        cancellation_time = timezone.datetime(2025, 6, 18, 10, 0, 0, tzinfo=timezone.utc)
+        fee = ReservationService. calculate_cancellation_fee(
+            original_price=Decimal("100.00"),
+            class_datetime=class_time,
+            cancellation_time=cancellation_time
+        )
+        self.assertEqual(fee, Decimal("0.00"))
+
+
+class ReservationServiceConflictTests(TestCase):
+
+    def test_conflicting_reservation_before_6am_fails(self):
+        class_time = timezone.datetime(2025, 6, 15, 5, 0, 0, tzinfo=timezone.utc)
+        has_conflict, message = ReservationService.check_conflicting_reservations(
+            user_id=1,
+            class_datetime=class_time
+        )
+        self.assertTrue(has_conflict)
+        self.assertIn("6 AM", message)
+
+    def test_conflicting_reservation_after_10pm_fails(self):
+        class_time = timezone.datetime(2025, 6, 15, 22, 0, 0, tzinfo=timezone.utc)
+        has_conflict, message = ReservationService.check_conflicting_reservations(
+            user_id=1,
+            class_datetime=class_time
+        )
+        self.assertTrue(has_conflict)
+        self.assertIn("10 PM", message)
+
+    def test_conflicting_reservation_valid_hours_passes(self):
+        class_time = timezone.datetime(2025, 6, 15, 14, 0, 0, tzinfo=timezone.utc)
+        has_conflict, message = ReservationService.check_conflicting_reservations(
+            user_id=1,
+            class_datetime=class_time
+        )
+        self.assertFalse(has_conflict)
+        self.assertEqual(message, "")
+
+
+class CapacityCalculatorCanBookTests(TestCase):
+
+    def test_can_book_with_available_spots(self):
+        result = CapacityCalculator. can_book(current_bookings=5, capacity=20)
+        self.assertTrue(result)
+
+    def test_can_book_at_capacity_returns_false(self):
+        result = CapacityCalculator.can_book(current_bookings=20, capacity=20)
+        self.assertFalse(result)
+
+    def test_can_book_zero_capacity_returns_false(self):
+        result = CapacityCalculator.can_book(current_bookings=0, capacity=0)
+        self.assertFalse(result)
+
+    def test_can_book_one_spot_remaining(self):
+        result = CapacityCalculator.can_book(current_bookings=19, capacity=20)
+        self.assertTrue(result)
+
+
+class CapacityCalculatorOccupancyTests(TestCase):
+
+    def test_occupancy_rate_empty_class(self):
+        rate = CapacityCalculator. calculate_occupancy_rate(current_bookings=0, capacity=20)
+        self.assertEqual(rate, Decimal("0.00"))
+
+    def test_occupancy_rate_half_full(self):
+        rate = CapacityCalculator.calculate_occupancy_rate(current_bookings=10, capacity=20)
+        self.assertEqual(rate, Decimal("0.50"))
+
+    def test_occupancy_rate_full_class(self):
+        rate = CapacityCalculator.calculate_occupancy_rate(current_bookings=20, capacity=20)
+        self.assertEqual(rate, Decimal("1.00"))
+
+    def test_occupancy_rate_zero_capacity_raises_error(self):
+        with self.assertRaises(ValueError):
+            CapacityCalculator.calculate_occupancy_rate(current_bookings=0, capacity=0)
+
+    def test_occupancy_rate_negative_bookings_raises_error(self):
+        with self.assertRaises(ValueError):
+            CapacityCalculator.calculate_occupancy_rate(current_bookings=-1, capacity=20)
+
+    def test_occupancy_rate_caps_at_100_percent(self):
+        rate = CapacityCalculator.calculate_occupancy_rate(current_bookings=25, capacity=20)
+        self.assertEqual(rate, Decimal("1.00"))
+
+
+class CapacityCalculatorAvailableSpotsTests(TestCase):
+
+    def test_available_spots_calculation(self):
+        available = CapacityCalculator.get_available_spots(current_bookings=5, capacity=20)
+        self.assertEqual(available, 15)
+
+    def test_available_spots_returns_zero_not_negative(self):
+        available = CapacityCalculator.get_available_spots(current_bookings=25, capacity=20)
+        self.assertEqual(available, 0)
+
+    def test_available_spots_at_capacity(self):
+        available = CapacityCalculator. get_available_spots(current_bookings=20, capacity=20)
+        self.assertEqual(available, 0)
+
+
+class CapacityCalculatorNearlyFullTests(TestCase):
+
+    def test_is_nearly_full_above_threshold(self):
+        result = CapacityCalculator. is_nearly_full(current_bookings=18, capacity=20)
+        self.assertTrue(result)
+
+    def test_is_nearly_full_below_threshold(self):
+        result = CapacityCalculator.is_nearly_full(current_bookings=17, capacity=20)
+        self.assertFalse(result)
+
+    def test_is_nearly_full_custom_threshold(self):
+        result = CapacityCalculator. is_nearly_full(
+            current_bookings=16,
+            capacity=20,
+            threshold=0.8
+        )
+        self.assertTrue(result)
+
+    def test_is_nearly_full_zero_capacity(self):
+        result = CapacityCalculator. is_nearly_full(current_bookings=0, capacity=0)
+        self.assertTrue(result)
+
+
+class CapacityCalculatorOptimalCapacityTests(TestCase):
+
+    def test_optimal_capacity_room_limiting(self):
+        capacity = CapacityCalculator. calculate_optimal_capacity(
+            room_size_sqm=20,
+            equipment_count=50,
+            instructor_capacity=30
+        )
+        self.assertEqual(capacity, 10)
+
+    def test_optimal_capacity_equipment_limiting(self):
+        capacity = CapacityCalculator.calculate_optimal_capacity(
+            room_size_sqm=100,
+            equipment_count=5,
+            instructor_capacity=30
+        )
+        self.assertEqual(capacity, 5)
+
+    def test_optimal_capacity_instructor_limiting(self):
+        capacity = CapacityCalculator. calculate_optimal_capacity(
+            room_size_sqm=100,
+            equipment_count=50,
+            instructor_capacity=8
+        )
+        self.assertEqual(capacity, 8)
+
+    def test_optimal_capacity_minimum_one(self):
+        capacity = CapacityCalculator.calculate_optimal_capacity(
+            room_size_sqm=1,
+            equipment_count=0,
+            instructor_capacity=0
+        )
+        self.assertEqual(capacity, 1)
+
+
+class ReservationAPICreateTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        
-        # Premium Üye Oluştur
-        self.user = User.objects.create_user(email="richie@fit.com", password="pass")
-        self.user.member.membership_type = 'PREMIUM'
-        self.user.member.save()
-        
-        # Token al ve giriş yap
-        self.client.force_authenticate(user=self.user)
-        
-        # Ders oluştur
-        self.instructor = User.objects.create_user(email="coach@fit.com", password="pass", is_instructor=True)
+        self.instructor = User.objects.create_user(
+            email="instructor@test.com",
+            password="testpass123",
+            is_instructor=True
+        )
+        self.user = User.objects.create_user(
+            email="member@test.com",
+            password="testpass123"
+        )
+        self.future_date = timezone.now() + timedelta(days=2)
+        self.future_date = self.future_date.replace(hour=10, minute=0)
         self.fitness_class = FitnessClass.objects.create(
-            name="Spinning",
+            name="API Test Class",
             instructor=self.instructor,
             capacity=20,
-            date_time=timezone.now() + timedelta(days=2),
-            base_price=Decimal('100.00')
+            date_time=self.future_date,
+            base_price=Decimal("100.00")
         )
-        
-        self.list_url = '/api/reservations/'
-        self.detail_url = lambda id: f'/api/reservations/{id}/'
+        self.url = "/api/reservations/"
 
-    def test_create_reservation_end_to_end(self):
-        """
-        E2E: Kullanıcı derse ID ile istek atar, sistem fiyatı hesaplar ve kaydeder.
-        """
-        payload = {
-            'fitness_class_id': self.fitness_class.id
-        }
-        
-        # POST isteği at
-        response = self.client.post(self.list_url, payload)
-        
-        # 1. Status 201 Created mi?
+    def test_post_reservation_returns_201_on_success(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.url, {"fitness_class_id": self. fitness_class.id})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
-        # 2. Veritabanında oluştu mu?
-        self.assertTrue(Reservation.objects.filter(member=self.user.member).exists())
-        
-        # 3. Dinamik Fiyat Doğru Hesaplandı mı?
-        # Premium üye (%20 indirim) -> 100 TL yerine 80 TL ödemeli
-        reservation = Reservation.objects.get(member=self.user.member)
-        self.assertEqual(reservation.price_paid, Decimal('80.00'))
 
-    def test_cancel_reservation(self):
-        """
-        E2E: Rezervasyon iptal (DELETE) testi.
-        """
-        # Önce bir rezervasyon oluştur
-        reservation = Reservation.objects.create(
-            member=self.user.member, 
-            fitness_class=self.fitness_class,
-            price_paid=Decimal('100.00')
+    def test_post_reservation_creates_record_in_database(self):
+        self.client.force_authenticate(user=self.user)
+        self.client.post(self.url, {"fitness_class_id": self. fitness_class.id})
+        self.assertTrue(
+            Reservation.objects.filter(
+                member=self.user. member,
+                fitness_class=self.fitness_class
+            ).exists()
         )
-        
-        # Silme isteği gönder
-        response = self.client.delete(self.detail_url(reservation.id))
-        
-        # 204 No Content dönmeli
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        
-        # Veritabanından silinmiş olmalı (veya status=CANCELLED olmalı, tasarıma göre)
-        # Bizim tasarımda siliyoruz:
-        self.assertFalse(Reservation.objects.filter(id=reservation.id).exists())
 
-    def test_cannot_reserve_full_class_api(self):
-        """
-        E2E: Dolu derse API üzerinden istek atılırsa 400 Bad Request dönmeli.
-        """
-        # Dersi dolduralım (Kapasiteyi 0 yap hileyle)
-        self.fitness_class.capacity = 0
-        self.fitness_class.save()
-        
-        payload = {'fitness_class_id': self.fitness_class.id}
-        response = self.client.post(self.list_url, payload)
-        
+    def test_post_reservation_returns_reservation_id(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.url, {"fitness_class_id":  self.fitness_class.id})
+        self.assertIn("id", response.data)
+        self.assertIsInstance(response.data["id"], int)
+
+    def test_post_reservation_requires_authentication(self):
+        response = self.client.post(self.url, {"fitness_class_id": self. fitness_class.id})
+        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+
+    def test_post_reservation_returns_400_for_missing_fitness_class_id(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self. url, {})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("full", str(response.data).lower())
+
+    def test_post_reservation_returns_400_for_nonexistent_class(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.url, {"fitness_class_id":  99999})
+        self.assertEqual(response.status_code, status. HTTP_400_BAD_REQUEST)
+
+    def test_post_reservation_returns_400_when_class_full(self):
+        self.fitness_class.capacity = 0
+        self.fitness_class. save()
+        self.client. force_authenticate(user=self. user)
+        response = self. client.post(self.url, {"fitness_class_id": self.fitness_class.id})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_post_reservation_returns_400_for_duplicate_booking(self):
+        self.client.force_authenticate(user=self.user)
+        self.client.post(self.url, {"fitness_class_id": self. fitness_class.id})
+        response = self.client.post(self.url, {"fitness_class_id": self.fitness_class.id})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class ReservationAPIDeleteTests(TestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+        self.instructor = User.objects.create_user(
+            email="instructor@test.com",
+            password="testpass123",
+            is_instructor=True
+        )
+        self.user = User.objects.create_user(
+            email="member@test.com",
+            password="testpass123"
+        )
+        self.future_date = timezone.now() + timedelta(days=2)
+        self.fitness_class = FitnessClass.objects.create(
+            name="Delete Test Class",
+            instructor=self.instructor,
+            capacity=20,
+            date_time=self.future_date,
+            base_price=Decimal("100.00")
+        )
+        self.reservation = Reservation.objects.create(
+            member=self.user. member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+
+    def test_delete_reservation_returns_204_on_success(self):
+        self.client.force_authenticate(user=self.user)
+        url = f"/api/reservations/{self.reservation.id}/"
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_delete_reservation_removes_record_from_database(self):
+        self.client.force_authenticate(user=self.user)
+        reservation_id = self.reservation.id
+        url = f"/api/reservations/{reservation_id}/"
+        self.client.delete(url)
+        self.assertFalse(Reservation.objects.filter(id=reservation_id).exists())
+
+    def test_delete_reservation_requires_authentication(self):
+        url = f"/api/reservations/{self.reservation.id}/"
+        response = self.client.delete(url)
+        self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+
+    def test_delete_reservation_returns_404_for_nonexistent_id(self):
+        self.client.force_authenticate(user=self.user)
+        url = "/api/reservations/99999/"
+        response = self.client. delete(url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class ReservationIntegrationClassesTests(TestCase):
+
+    def setUp(self):
+        self.instructor = User.objects.create_user(
+            email="instructor@test.com",
+            password="testpass123",
+            is_instructor=True
+        )
+        self.user1 = User.objects.create_user(
+            email="member1@test.com",
+            password="testpass123"
+        )
+        self.user2 = User.objects.create_user(
+            email="member2@test.com",
+            password="testpass123"
+        )
+        self.future_date = timezone.now() + timedelta(days=2)
+        self.future_date = self.future_date.replace(hour=10, minute=0)
+        self.fitness_class = FitnessClass.objects.create(
+            name="Integration Class",
+            instructor=self.instructor,
+            capacity=20,
+            date_time=self.future_date,
+            base_price=Decimal("100.00")
+        )
+
+    def test_reservation_uses_class_base_price(self):
+        reservation = Reservation(
+            member=self.user1. member,
+            fitness_class=self.fitness_class,
+            price_paid=None
+        )
+        reservation.save()
+        self.assertEqual(reservation.price_paid, Decimal("100.00"))
+
+    def test_multiple_reservations_accumulate_correctly(self):
+        Reservation.objects.create(
+            member=self.user1.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        Reservation.objects.create(
+            member=self.user2.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        self.assertEqual(self.fitness_class.reservations.count(), 2)
+
+
+class ReservationIntegrationMemberTests(TestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+        self.instructor = User.objects.create_user(
+            email="instructor@test.com",
+            password="testpass123",
+            is_instructor=True
+        )
+        self.standard_user = User.objects.create_user(
+            email="standard@test.com",
+            password="testpass123"
+        )
+        self.premium_user = User.objects.create_user(
+            email="premium@test.com",
+            password="testpass123"
+        )
+        self.premium_user.member.membership_type = "PREMIUM"
+        self.premium_user.member.save()
+        self.student_user = User.objects.create_user(
+            email="student@test.com",
+            password="testpass123"
+        )
+        self.student_user.member.membership_type = "STUDENT"
+        self.student_user.member.save()
+        self.future_date = timezone.now() + timedelta(days=2)
+        self.future_date = self.future_date.replace(hour=10, minute=0)
+        self.fitness_class = FitnessClass.objects.create(
+            name="Member Test Class",
+            instructor=self.instructor,
+            capacity=20,
+            date_time=self.future_date,
+            base_price=Decimal("100.00")
+        )
+
+    def test_reservation_created_for_authenticated_user_member(self):
+        self.client.force_authenticate(user=self.standard_user)
+        self.client.post("/api/reservations/", {"fitness_class_id": self. fitness_class.id})
+        reservation = Reservation.objects.get(fitness_class=self.fitness_class)
+        self.assertEqual(reservation.member, self.standard_user.member)
+
+    def test_reservation_applies_standard_membership_pricing(self):
+        self.client.force_authenticate(user=self.standard_user)
+        self.client.post("/api/reservations/", {"fitness_class_id": self.fitness_class. id})
+        reservation = Reservation.objects.get(member=self.standard_user.member)
+        self.assertEqual(reservation.price_paid, Decimal("100.00"))
+
+    def test_reservation_applies_premium_membership_discount(self):
+        self.client.force_authenticate(user=self.premium_user)
+        self.client.post("/api/reservations/", {"fitness_class_id": self.fitness_class. id})
+        reservation = Reservation.objects.get(member=self.premium_user.member)
+        self.assertEqual(reservation.price_paid, Decimal("80.00"))
+
+    def test_reservation_applies_student_membership_discount(self):
+        self.client.force_authenticate(user=self.student_user)
+        self.client.post("/api/reservations/", {"fitness_class_id": self.fitness_class.id})
+        reservation = Reservation.objects.get(member=self.student_user.member)
+        self.assertEqual(reservation. price_paid, Decimal("50.00"))
+
+    def test_user_can_have_multiple_reservations_different_classes(self):
+        future_date2 = timezone.now() + timedelta(days=3)
+        fitness_class2 = FitnessClass.objects.create(
+            name="Second Class",
+            instructor=self. instructor,
+            capacity=20,
+            date_time=future_date2,
+            base_price=Decimal("100.00")
+        )
+        Reservation.objects.create(
+            member=self.standard_user.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        Reservation.objects.create(
+            member=self.standard_user.member,
+            fitness_class=fitness_class2,
+            price_paid=Decimal("100.00")
+        )
+        self.assertEqual(self.standard_user.member.reservations. count(), 2)
+
+    def test_user_cannot_have_duplicate_reservation_same_class(self):
+        Reservation.objects.create(
+            member=self.standard_user. member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        with self.assertRaises(IntegrityError):
+            Reservation.objects.create(
+                member=self.standard_user.member,
+                fitness_class=self.fitness_class,
+                price_paid=Decimal("100.00")
+            )
+
+    def test_deleting_user_deletes_member_and_reservations(self):
+        reservation = Reservation.objects.create(
+            member=self.standard_user.member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        reservation_id = reservation.id
+        member_id = self.standard_user.member.id
+        self. standard_user.delete()
+        self.assertFalse(Reservation.objects.filter(id=reservation_id).exists())
+        self.assertFalse(Member.objects.filter(id=member_id).exists())
+
+
+class ReservationIntegrationPriceTests(TestCase):
+
+    def setUp(self):
+        self.instructor = User.objects.create_user(
+            email="instructor@test.com",
+            password="testpass123",
+            is_instructor=True
+        )
+        self.user = User.objects.create_user(
+            email="member@test.com",
+            password="testpass123"
+        )
+        self.future_date = timezone.now() + timedelta(days=2)
+        self.future_date = self.future_date.replace(hour=10, minute=0)
+        self.fitness_class = FitnessClass.objects.create(
+            name="Price Test Class",
+            instructor=self.instructor,
+            capacity=20,
+            date_time=self.future_date,
+            base_price=Decimal("100.00")
+        )
+
+    def test_reservation_price_frozen_after_class_price_change(self):
+        reservation = Reservation.objects.create(
+            member=self.user. member,
+            fitness_class=self.fitness_class,
+            price_paid=Decimal("100.00")
+        )
+        self.fitness_class.base_price = Decimal("500.00")
+        self.fitness_class.save()
+        reservation.refresh_from_db()
+        self.assertEqual(reservation.price_paid, Decimal("100.00"))
+
+
+class ReservationIntegrationPeakHourTests(TestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+        self.instructor = User.objects.create_user(
+            email="instructor@test.com",
+            password="testpass123",
+            is_instructor=True
+        )
+        self.user = User.objects. create_user(
+            email="member@test.com",
+            password="testpass123"
+        )
+
+    def test_reservation_applies_peak_hour_surcharge(self):
+        peak_date = timezone.now() + timedelta(days=2)
+        peak_date = peak_date.replace(hour=19, minute=0)
+        peak_class = FitnessClass.objects.create(
+            name="Peak Class",
+            instructor=self.instructor,
+            capacity=20,
+            date_time=peak_date,
+            base_price=Decimal("100.00")
+        )
+        self.client.force_authenticate(user=self.user)
+        self.client.post("/api/reservations/", {"fitness_class_id": peak_class.id})
+        reservation = Reservation.objects.get(member=self.user.member)
+        self.assertEqual(reservation.price_paid, Decimal("125.00"))
+
+    def test_reservation_no_surcharge_off_peak(self):
+        off_peak_date = timezone.now() + timedelta(days=2)
+        off_peak_date = off_peak_date.replace(hour=10, minute=0)
+        off_peak_class = FitnessClass.objects.create(
+            name="Off Peak Class",
+            instructor=self.instructor,
+            capacity=20,
+            date_time=off_peak_date,
+            base_price=Decimal("100.00")
+        )
+        self.client.force_authenticate(user=self.user)
+        self.client.post("/api/reservations/", {"fitness_class_id": off_peak_class. id})
+        reservation = Reservation.objects.get(member=self.user.member)
+        self.assertEqual(reservation.price_paid, Decimal("100.00"))

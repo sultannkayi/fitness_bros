@@ -1,7 +1,8 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from decimal import Decimal
-from .services import PricingEngine
+from . services import PricingEngine
+
 
 class Reservation(models.Model):
     member = models.ForeignKey(
@@ -19,7 +20,7 @@ class Reservation(models.Model):
     price_paid = models.DecimalField(
         max_digits=8,
         decimal_places=2,
-        null=True, #TDD için False yerine True alındı (Double booking'de test patlıyor)
+        null=True,
         blank=False
     )
 
@@ -38,7 +39,7 @@ class Reservation(models.Model):
             fitness_class=self.fitness_class
         ).exclude(pk=self.pk).count()
 
-        if current_count >= self.fitness_class.capacity:
+        if current_count >= self. fitness_class.capacity:
             raise ValidationError("Class is full")
 
     def save(self, *args, **kwargs):
@@ -52,7 +53,7 @@ class Reservation(models.Model):
 
             self.price_paid = PricingEngine.calculate_price(
                 base_price=self.fitness_class.base_price,
-                membership_type=self.member.membership_type,
+                membership_type=self.member. membership_type,
                 occupancy_rate=occupancy_rate,
                 is_peak_hour=is_peak
             )
