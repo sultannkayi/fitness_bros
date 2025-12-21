@@ -1,18 +1,18 @@
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone as dt_timezone
 from decimal import Decimal
 from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
 from django.contrib.auth import get_user_model
-from django. core.exceptions import ValidationError
-from django.db. utils import IntegrityError
+from django.core.exceptions import ValidationError
+from django.db.utils import IntegrityError
 from rest_framework.test import APIClient
 from rest_framework import status
 
 from classes.models import FitnessClass
 from memberships.models import Member
-from . models import Reservation
+from .models import Reservation
 from .services import PricingEngine, ReservationService, CapacityCalculator
 
 User = get_user_model()
@@ -41,7 +41,7 @@ class ReservationModelFieldTests(TestCase):
 
     def test_reservation_has_member_field(self):
         reservation = Reservation.objects.create(
-            member=self.user. member,
+            member=self.user.member,
             fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
         )
@@ -65,7 +65,7 @@ class ReservationModelFieldTests(TestCase):
 
     def test_reservation_has_created_at_field(self):
         reservation = Reservation.objects.create(
-            member=self.user. member,
+            member=self.user.member,
             fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
         )
@@ -73,7 +73,7 @@ class ReservationModelFieldTests(TestCase):
 
     def test_price_paid_allows_null(self):
         reservation = Reservation(
-            member=self.user. member,
+            member=self.user.member,
             fitness_class=self.fitness_class,
             price_paid=None
         )
@@ -92,7 +92,7 @@ class ReservationModelFieldTests(TestCase):
     def test_price_paid_accepts_zero(self):
         reservation = Reservation.objects.create(
             member=self.user.member,
-            fitness_class=self. fitness_class,
+            fitness_class=self.fitness_class,
             price_paid=Decimal("0.00")
         )
         self.assertEqual(reservation.price_paid, Decimal("0.00"))
@@ -101,12 +101,12 @@ class ReservationModelFieldTests(TestCase):
 class ReservationModelRelationshipTests(TestCase):
 
     def setUp(self):
-        self.instructor = User.objects. create_user(
+        self.instructor = User.objects.create_user(
             email="instructor@test.com",
             password="testpass123",
             is_instructor=True
         )
-        self.user = User. objects.create_user(
+        self.user = User.objects.create_user(
             email="member@test.com",
             password="testpass123"
         )
@@ -121,14 +121,14 @@ class ReservationModelRelationshipTests(TestCase):
 
     def test_reservation_member_foreign_key(self):
         reservation = Reservation.objects.create(
-            member=self.user. member,
+            member=self.user.member,
             fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
         )
-        self.assertEqual(reservation.member. user. email, "member@test.com")
+        self.assertEqual(reservation.member.user.email, "member@test.com")
 
     def test_reservation_fitness_class_foreign_key(self):
-        reservation = Reservation. objects.create(
+        reservation = Reservation.objects.create(
             member=self.user.member,
             fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
@@ -138,15 +138,15 @@ class ReservationModelRelationshipTests(TestCase):
     def test_member_can_access_reservations_via_related_name(self):
         Reservation.objects.create(
             member=self.user.member,
-            fitness_class=self. fitness_class,
+            fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
         )
-        reservations = self.user.member.reservations. all()
+        reservations = self.user.member.reservations.all()
         self.assertEqual(reservations.count(), 1)
 
     def test_fitness_class_can_access_reservations_via_related_name(self):
         Reservation.objects.create(
-            member=self.user. member,
+            member=self.user.member,
             fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
         )
@@ -155,7 +155,7 @@ class ReservationModelRelationshipTests(TestCase):
 
     def test_reservation_cascade_delete_on_member_delete(self):
         reservation = Reservation.objects.create(
-            member=self.user. member,
+            member=self.user.member,
             fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
         )
@@ -166,7 +166,7 @@ class ReservationModelRelationshipTests(TestCase):
     def test_reservation_cascade_delete_on_fitness_class_delete(self):
         reservation = Reservation.objects.create(
             member=self.user.member,
-            fitness_class=self. fitness_class,
+            fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
         )
         reservation_id = reservation.id
@@ -177,7 +177,7 @@ class ReservationModelRelationshipTests(TestCase):
 class ReservationModelConstraintTests(TestCase):
 
     def setUp(self):
-        self.instructor = User.objects. create_user(
+        self.instructor = User.objects.create_user(
             email="instructor@test.com",
             password="testpass123",
             is_instructor=True
@@ -197,7 +197,7 @@ class ReservationModelConstraintTests(TestCase):
         self.future_date = timezone.now() + timedelta(days=2)
         self.fitness_class = FitnessClass.objects.create(
             name="Small Class",
-            instructor=self. instructor,
+            instructor=self.instructor,
             capacity=2,
             date_time=self.future_date,
             base_price=Decimal("100.00")
@@ -271,13 +271,13 @@ class ReservationModelAutoCalculationTests(TestCase):
             password="testpass123",
             is_instructor=True
         )
-        self.user = User.objects. create_user(
+        self.user = User.objects.create_user(
             email="member@test.com",
             password="testpass123"
         )
         self.future_date = timezone.now() + timedelta(days=2)
         self.future_date = self.future_date.replace(hour=10, minute=0)
-        self.fitness_class = FitnessClass.objects. create(
+        self.fitness_class = FitnessClass.objects.create(
             name="Test Class",
             instructor=self.instructor,
             capacity=20,
@@ -287,7 +287,7 @@ class ReservationModelAutoCalculationTests(TestCase):
 
     def test_save_calculates_price_when_price_paid_is_none(self):
         reservation = Reservation(
-            member=self.user. member,
+            member=self.user.member,
             fitness_class=self.fitness_class,
             price_paid=None
         )
@@ -298,7 +298,7 @@ class ReservationModelAutoCalculationTests(TestCase):
     def test_save_preserves_explicit_price_paid(self):
         reservation = Reservation(
             member=self.user.member,
-            fitness_class=self. fitness_class,
+            fitness_class=self.fitness_class,
             price_paid=Decimal("75.00")
         )
         reservation.save()
@@ -320,7 +320,7 @@ class PricingEngineTests(TestCase):
         self.assertEqual(price, Decimal("100.00"))
 
     def test_premium_member_20_percent_discount(self):
-        price = PricingEngine. calculate_price(
+        price = PricingEngine.calculate_price(
             base_price=self.base_price,
             membership_type="PREMIUM",
             occupancy_rate=0.10,
@@ -329,7 +329,7 @@ class PricingEngineTests(TestCase):
         self.assertEqual(price, Decimal("80.00"))
 
     def test_student_member_50_percent_discount(self):
-        price = PricingEngine. calculate_price(
+        price = PricingEngine.calculate_price(
             base_price=self.base_price,
             membership_type="STUDENT",
             occupancy_rate=0.10,
@@ -339,7 +339,7 @@ class PricingEngineTests(TestCase):
 
     def test_occupancy_below_80_no_surge(self):
         price = PricingEngine.calculate_price(
-            base_price=self. base_price,
+            base_price=self.base_price,
             membership_type="STANDARD",
             occupancy_rate=0.79,
             is_peak_hour=False
@@ -357,7 +357,7 @@ class PricingEngineTests(TestCase):
 
     def test_occupancy_above_80_triggers_surge(self):
         price = PricingEngine.calculate_price(
-            base_price=self. base_price,
+            base_price=self.base_price,
             membership_type="STANDARD",
             occupancy_rate=0.90,
             is_peak_hour=False
@@ -393,7 +393,7 @@ class PricingEngineTests(TestCase):
 
     def test_combined_student_surge_and_peak(self):
         price = PricingEngine.calculate_price(
-            base_price=self. base_price,
+            base_price=self.base_price,
             membership_type="STUDENT",
             occupancy_rate=0.90,
             is_peak_hour=True
@@ -414,32 +414,32 @@ class ReservationServiceValidationTests(TestCase):
 
     @patch("reservations.services.timezone.now")
     def test_validate_future_class_passes(self, mock_now):
-        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
-        class_time = timezone.datetime(2025, 6, 16, 10, 0, 0, tzinfo=timezone.utc)
+        mock_now.return_value = datetime(2025, 6, 15, 10, 0, 0, tzinfo=dt_timezone.utc)
+        class_time = datetime(2025, 6, 16, 10, 0, 0, tzinfo=dt_timezone.utc)
         is_valid, error = ReservationService.validate_reservation_time(class_time)
         self.assertTrue(is_valid)
         self.assertEqual(error, "")
 
     @patch("reservations.services.timezone.now")
     def test_validate_past_class_fails(self, mock_now):
-        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
-        class_time = timezone. datetime(2025, 6, 14, 10, 0, 0, tzinfo=timezone.utc)
+        mock_now.return_value = datetime(2025, 6, 15, 10, 0, 0, tzinfo=dt_timezone.utc)
+        class_time = datetime(2025, 6, 14, 10, 0, 0, tzinfo=dt_timezone.utc)
         is_valid, error = ReservationService.validate_reservation_time(class_time)
         self.assertFalse(is_valid)
-        self.assertIn("past", error. lower())
+        self.assertIn("past", error.lower())
 
     @patch("reservations.services.timezone.now")
     def test_validate_class_less_than_1_hour_fails(self, mock_now):
-        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
-        class_time = timezone.datetime(2025, 6, 15, 10, 30, 0, tzinfo=timezone.utc)
+        mock_now.return_value = datetime(2025, 6, 15, 10, 0, 0, tzinfo=dt_timezone.utc)
+        class_time = datetime(2025, 6, 15, 10, 30, 0, tzinfo=dt_timezone.utc)
         is_valid, error = ReservationService.validate_reservation_time(class_time)
         self.assertFalse(is_valid)
         self.assertIn("1 hour", error.lower())
 
     @patch("reservations.services.timezone.now")
     def test_validate_class_more_than_30_days_fails(self, mock_now):
-        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
-        class_time = timezone.datetime(2025, 7, 20, 10, 0, 0, tzinfo=timezone.utc)
+        mock_now.return_value = datetime(2025, 6, 15, 10, 0, 0, tzinfo=dt_timezone.utc)
+        class_time = datetime(2025, 7, 20, 10, 0, 0, tzinfo=dt_timezone.utc)
         is_valid, error = ReservationService.validate_reservation_time(class_time)
         self.assertFalse(is_valid)
         self.assertIn("30 days", error.lower())
@@ -449,8 +449,8 @@ class ReservationServiceCancellationTests(TestCase):
 
     @patch("reservations.services.timezone.now")
     def test_cancellation_fee_free_over_24_hours(self, mock_now):
-        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
-        class_time = timezone.datetime(2025, 6, 17, 10, 0, 0, tzinfo=timezone.utc)
+        mock_now.return_value = datetime(2025, 6, 15, 10, 0, 0, tzinfo=dt_timezone.utc)
+        class_time = datetime(2025, 6, 17, 10, 0, 0, tzinfo=dt_timezone.utc)
         fee = ReservationService.calculate_cancellation_fee(
             original_price=Decimal("100.00"),
             class_datetime=class_time
@@ -459,10 +459,9 @@ class ReservationServiceCancellationTests(TestCase):
 
     @patch("reservations.services.timezone.now")
     def test_cancellation_fee_50_percent_12_to_24_hours(self, mock_now):
-        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone. utc)
-        class_time = timezone.datetime(2025, 6, 15, 28, 0, 0, tzinfo=timezone.utc)
-        class_time = timezone.datetime(2025, 6, 16, 4, 0, 0, tzinfo=timezone.utc)
-        fee = ReservationService. calculate_cancellation_fee(
+        mock_now.return_value = datetime(2025, 6, 15, 10, 0, 0, tzinfo=dt_timezone.utc)
+        class_time = datetime(2025, 6, 16, 4, 0, 0, tzinfo=dt_timezone.utc)
+        fee = ReservationService.calculate_cancellation_fee(
             original_price=Decimal("100.00"),
             class_datetime=class_time
         )
@@ -470,8 +469,8 @@ class ReservationServiceCancellationTests(TestCase):
 
     @patch("reservations.services.timezone.now")
     def test_cancellation_fee_100_percent_under_12_hours(self, mock_now):
-        mock_now.return_value = timezone.datetime(2025, 6, 15, 10, 0, 0, tzinfo=timezone.utc)
-        class_time = timezone.datetime(2025, 6, 15, 16, 0, 0, tzinfo=timezone.utc)
+        mock_now.return_value = datetime(2025, 6, 15, 10, 0, 0, tzinfo=dt_timezone.utc)
+        class_time = datetime(2025, 6, 15, 16, 0, 0, tzinfo=dt_timezone.utc)
         fee = ReservationService.calculate_cancellation_fee(
             original_price=Decimal("100.00"),
             class_datetime=class_time
@@ -479,9 +478,9 @@ class ReservationServiceCancellationTests(TestCase):
         self.assertEqual(fee, Decimal("100.00"))
 
     def test_cancellation_with_custom_time(self):
-        class_time = timezone.datetime(2025, 6, 20, 10, 0, 0, tzinfo=timezone.utc)
-        cancellation_time = timezone.datetime(2025, 6, 18, 10, 0, 0, tzinfo=timezone.utc)
-        fee = ReservationService. calculate_cancellation_fee(
+        class_time = datetime(2025, 6, 20, 10, 0, 0, tzinfo=dt_timezone.utc)
+        cancellation_time = datetime(2025, 6, 18, 10, 0, 0, tzinfo=dt_timezone.utc)
+        fee = ReservationService.calculate_cancellation_fee(
             original_price=Decimal("100.00"),
             class_datetime=class_time,
             cancellation_time=cancellation_time
@@ -492,7 +491,7 @@ class ReservationServiceCancellationTests(TestCase):
 class ReservationServiceConflictTests(TestCase):
 
     def test_conflicting_reservation_before_6am_fails(self):
-        class_time = timezone.datetime(2025, 6, 15, 5, 0, 0, tzinfo=timezone.utc)
+        class_time = datetime(2025, 6, 15, 5, 0, 0, tzinfo=dt_timezone.utc)
         has_conflict, message = ReservationService.check_conflicting_reservations(
             user_id=1,
             class_datetime=class_time
@@ -501,7 +500,7 @@ class ReservationServiceConflictTests(TestCase):
         self.assertIn("6 AM", message)
 
     def test_conflicting_reservation_after_10pm_fails(self):
-        class_time = timezone.datetime(2025, 6, 15, 22, 0, 0, tzinfo=timezone.utc)
+        class_time = datetime(2025, 6, 15, 22, 0, 0, tzinfo=dt_timezone.utc)
         has_conflict, message = ReservationService.check_conflicting_reservations(
             user_id=1,
             class_datetime=class_time
@@ -510,7 +509,7 @@ class ReservationServiceConflictTests(TestCase):
         self.assertIn("10 PM", message)
 
     def test_conflicting_reservation_valid_hours_passes(self):
-        class_time = timezone.datetime(2025, 6, 15, 14, 0, 0, tzinfo=timezone.utc)
+        class_time = datetime(2025, 6, 15, 14, 0, 0, tzinfo=dt_timezone.utc)
         has_conflict, message = ReservationService.check_conflicting_reservations(
             user_id=1,
             class_datetime=class_time
@@ -522,7 +521,7 @@ class ReservationServiceConflictTests(TestCase):
 class CapacityCalculatorCanBookTests(TestCase):
 
     def test_can_book_with_available_spots(self):
-        result = CapacityCalculator. can_book(current_bookings=5, capacity=20)
+        result = CapacityCalculator.can_book(current_bookings=5, capacity=20)
         self.assertTrue(result)
 
     def test_can_book_at_capacity_returns_false(self):
@@ -541,7 +540,7 @@ class CapacityCalculatorCanBookTests(TestCase):
 class CapacityCalculatorOccupancyTests(TestCase):
 
     def test_occupancy_rate_empty_class(self):
-        rate = CapacityCalculator. calculate_occupancy_rate(current_bookings=0, capacity=20)
+        rate = CapacityCalculator.calculate_occupancy_rate(current_bookings=0, capacity=20)
         self.assertEqual(rate, Decimal("0.00"))
 
     def test_occupancy_rate_half_full(self):
@@ -576,14 +575,14 @@ class CapacityCalculatorAvailableSpotsTests(TestCase):
         self.assertEqual(available, 0)
 
     def test_available_spots_at_capacity(self):
-        available = CapacityCalculator. get_available_spots(current_bookings=20, capacity=20)
+        available = CapacityCalculator.get_available_spots(current_bookings=20, capacity=20)
         self.assertEqual(available, 0)
 
 
 class CapacityCalculatorNearlyFullTests(TestCase):
 
     def test_is_nearly_full_above_threshold(self):
-        result = CapacityCalculator. is_nearly_full(current_bookings=18, capacity=20)
+        result = CapacityCalculator.is_nearly_full(current_bookings=18, capacity=20)
         self.assertTrue(result)
 
     def test_is_nearly_full_below_threshold(self):
@@ -591,7 +590,7 @@ class CapacityCalculatorNearlyFullTests(TestCase):
         self.assertFalse(result)
 
     def test_is_nearly_full_custom_threshold(self):
-        result = CapacityCalculator. is_nearly_full(
+        result = CapacityCalculator.is_nearly_full(
             current_bookings=16,
             capacity=20,
             threshold=0.8
@@ -599,14 +598,14 @@ class CapacityCalculatorNearlyFullTests(TestCase):
         self.assertTrue(result)
 
     def test_is_nearly_full_zero_capacity(self):
-        result = CapacityCalculator. is_nearly_full(current_bookings=0, capacity=0)
+        result = CapacityCalculator.is_nearly_full(current_bookings=0, capacity=0)
         self.assertTrue(result)
 
 
 class CapacityCalculatorOptimalCapacityTests(TestCase):
 
     def test_optimal_capacity_room_limiting(self):
-        capacity = CapacityCalculator. calculate_optimal_capacity(
+        capacity = CapacityCalculator.calculate_optimal_capacity(
             room_size_sqm=20,
             equipment_count=50,
             instructor_capacity=30
@@ -622,7 +621,7 @@ class CapacityCalculatorOptimalCapacityTests(TestCase):
         self.assertEqual(capacity, 5)
 
     def test_optimal_capacity_instructor_limiting(self):
-        capacity = CapacityCalculator. calculate_optimal_capacity(
+        capacity = CapacityCalculator.calculate_optimal_capacity(
             room_size_sqm=100,
             equipment_count=50,
             instructor_capacity=8
@@ -664,15 +663,15 @@ class ReservationAPICreateTests(TestCase):
 
     def test_post_reservation_returns_201_on_success(self):
         self.client.force_authenticate(user=self.user)
-        response = self.client.post(self.url, {"fitness_class_id": self. fitness_class.id})
+        response = self.client.post(self.url, {"fitness_class_id": self.fitness_class.id})
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_post_reservation_creates_record_in_database(self):
         self.client.force_authenticate(user=self.user)
-        self.client.post(self.url, {"fitness_class_id": self. fitness_class.id})
+        self.client.post(self.url, {"fitness_class_id": self.fitness_class.id})
         self.assertTrue(
             Reservation.objects.filter(
-                member=self.user. member,
+                member=self.user.member,
                 fitness_class=self.fitness_class
             ).exists()
         )
@@ -684,29 +683,29 @@ class ReservationAPICreateTests(TestCase):
         self.assertIsInstance(response.data["id"], int)
 
     def test_post_reservation_requires_authentication(self):
-        response = self.client.post(self.url, {"fitness_class_id": self. fitness_class.id})
+        response = self.client.post(self.url, {"fitness_class_id": self.fitness_class.id})
         self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
 
     def test_post_reservation_returns_400_for_missing_fitness_class_id(self):
         self.client.force_authenticate(user=self.user)
-        response = self.client.post(self. url, {})
+        response = self.client.post(self.url, {})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_post_reservation_returns_400_for_nonexistent_class(self):
         self.client.force_authenticate(user=self.user)
         response = self.client.post(self.url, {"fitness_class_id":  99999})
-        self.assertEqual(response.status_code, status. HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_post_reservation_returns_400_when_class_full(self):
         self.fitness_class.capacity = 0
-        self.fitness_class. save()
-        self.client. force_authenticate(user=self. user)
-        response = self. client.post(self.url, {"fitness_class_id": self.fitness_class.id})
+        self.fitness_class.save()
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.url, {"fitness_class_id": self.fitness_class.id})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_post_reservation_returns_400_for_duplicate_booking(self):
         self.client.force_authenticate(user=self.user)
-        self.client.post(self.url, {"fitness_class_id": self. fitness_class.id})
+        self.client.post(self.url, {"fitness_class_id": self.fitness_class.id})
         response = self.client.post(self.url, {"fitness_class_id": self.fitness_class.id})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -733,7 +732,7 @@ class ReservationAPIDeleteTests(TestCase):
             base_price=Decimal("100.00")
         )
         self.reservation = Reservation.objects.create(
-            member=self.user. member,
+            member=self.user.member,
             fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
         )
@@ -759,7 +758,7 @@ class ReservationAPIDeleteTests(TestCase):
     def test_delete_reservation_returns_404_for_nonexistent_id(self):
         self.client.force_authenticate(user=self.user)
         url = "/api/reservations/99999/"
-        response = self.client. delete(url)
+        response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
@@ -791,7 +790,7 @@ class ReservationIntegrationClassesTests(TestCase):
 
     def test_reservation_uses_class_base_price(self):
         reservation = Reservation(
-            member=self.user1. member,
+            member=self.user1.member,
             fitness_class=self.fitness_class,
             price_paid=None
         )
@@ -849,19 +848,19 @@ class ReservationIntegrationMemberTests(TestCase):
 
     def test_reservation_created_for_authenticated_user_member(self):
         self.client.force_authenticate(user=self.standard_user)
-        self.client.post("/api/reservations/", {"fitness_class_id": self. fitness_class.id})
+        self.client.post("/api/reservations/", {"fitness_class_id": self.fitness_class.id})
         reservation = Reservation.objects.get(fitness_class=self.fitness_class)
         self.assertEqual(reservation.member, self.standard_user.member)
 
     def test_reservation_applies_standard_membership_pricing(self):
         self.client.force_authenticate(user=self.standard_user)
-        self.client.post("/api/reservations/", {"fitness_class_id": self.fitness_class. id})
+        self.client.post("/api/reservations/", {"fitness_class_id": self.fitness_class.id})
         reservation = Reservation.objects.get(member=self.standard_user.member)
         self.assertEqual(reservation.price_paid, Decimal("100.00"))
 
     def test_reservation_applies_premium_membership_discount(self):
         self.client.force_authenticate(user=self.premium_user)
-        self.client.post("/api/reservations/", {"fitness_class_id": self.fitness_class. id})
+        self.client.post("/api/reservations/", {"fitness_class_id": self.fitness_class.id})
         reservation = Reservation.objects.get(member=self.premium_user.member)
         self.assertEqual(reservation.price_paid, Decimal("80.00"))
 
@@ -869,13 +868,13 @@ class ReservationIntegrationMemberTests(TestCase):
         self.client.force_authenticate(user=self.student_user)
         self.client.post("/api/reservations/", {"fitness_class_id": self.fitness_class.id})
         reservation = Reservation.objects.get(member=self.student_user.member)
-        self.assertEqual(reservation. price_paid, Decimal("50.00"))
+        self.assertEqual(reservation.price_paid, Decimal("50.00"))
 
     def test_user_can_have_multiple_reservations_different_classes(self):
         future_date2 = timezone.now() + timedelta(days=3)
         fitness_class2 = FitnessClass.objects.create(
             name="Second Class",
-            instructor=self. instructor,
+            instructor=self.instructor,
             capacity=20,
             date_time=future_date2,
             base_price=Decimal("100.00")
@@ -890,11 +889,11 @@ class ReservationIntegrationMemberTests(TestCase):
             fitness_class=fitness_class2,
             price_paid=Decimal("100.00")
         )
-        self.assertEqual(self.standard_user.member.reservations. count(), 2)
+        self.assertEqual(self.standard_user.member.reservations.count(), 2)
 
     def test_user_cannot_have_duplicate_reservation_same_class(self):
         Reservation.objects.create(
-            member=self.standard_user. member,
+            member=self.standard_user.member,
             fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
         )
@@ -913,7 +912,7 @@ class ReservationIntegrationMemberTests(TestCase):
         )
         reservation_id = reservation.id
         member_id = self.standard_user.member.id
-        self. standard_user.delete()
+        self.standard_user.delete()
         self.assertFalse(Reservation.objects.filter(id=reservation_id).exists())
         self.assertFalse(Member.objects.filter(id=member_id).exists())
 
@@ -942,7 +941,7 @@ class ReservationIntegrationPriceTests(TestCase):
 
     def test_reservation_price_frozen_after_class_price_change(self):
         reservation = Reservation.objects.create(
-            member=self.user. member,
+            member=self.user.member,
             fitness_class=self.fitness_class,
             price_paid=Decimal("100.00")
         )
@@ -961,7 +960,7 @@ class ReservationIntegrationPeakHourTests(TestCase):
             password="testpass123",
             is_instructor=True
         )
-        self.user = User.objects. create_user(
+        self.user = User.objects.create_user(
             email="member@test.com",
             password="testpass123"
         )
@@ -992,6 +991,6 @@ class ReservationIntegrationPeakHourTests(TestCase):
             base_price=Decimal("100.00")
         )
         self.client.force_authenticate(user=self.user)
-        self.client.post("/api/reservations/", {"fitness_class_id": off_peak_class. id})
+        self.client.post("/api/reservations/", {"fitness_class_id": off_peak_class.id})
         reservation = Reservation.objects.get(member=self.user.member)
         self.assertEqual(reservation.price_paid, Decimal("100.00"))
