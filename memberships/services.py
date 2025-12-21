@@ -5,8 +5,8 @@ from typing import Optional
 class PricingService:
 
     BASE_PRICES = {
-        'STANDARD': Decimal('100.00'),
-        'PREMIUM': Decimal('200.00'),
+        'STANDARD':  Decimal('100.00'),
+        'PREMIUM':  Decimal('200.00'),
         'STUDENT': Decimal('75.00'),
     }
 
@@ -25,16 +25,16 @@ class PricingService:
         promo_code: Optional[str] = None
     ) -> Decimal:
         if membership_type not in cls.BASE_PRICES:
-            raise ValueError(f"Invalid membership type:  {membership_type}")
+            raise ValueError(f"Invalid membership type: {membership_type}")
 
         if duration_months not in cls.DURATION_DISCOUNTS:
-            raise ValueError(f"Invalid duration: {duration_months}. Must be 1, 3, 6, or 12 months.")
+            raise ValueError(f"Invalid duration: {duration_months}.  Must be 1, 3, 6, or 12 months.")
 
-        base_price = cls.BASE_PRICES[membership_type]
+        base_price = cls. BASE_PRICES[membership_type]
 
         total = base_price * duration_months
 
-        duration_discount = cls. DURATION_DISCOUNTS[duration_months]
+        duration_discount = cls.DURATION_DISCOUNTS[duration_months]
         total = total * (Decimal('1.00') - duration_discount)
 
         if promo_code:
@@ -65,7 +65,7 @@ class PricingService:
         if remaining_days < 0:
             raise ValueError("Remaining days cannot be negative")
 
-        current_price = cls. BASE_PRICES[current_type]
+        current_price = cls.BASE_PRICES[current_type]
         new_price = cls.BASE_PRICES[new_type]
 
         if new_price <= current_price:
@@ -80,7 +80,7 @@ class PricingService:
         return upgrade_cost.quantize(Decimal('0.01'))
 
     @classmethod
-    def get_membership_value(cls, membership_type:  str) -> Decimal:
+    def get_membership_value(cls, membership_type: str) -> Decimal:
         if membership_type not in cls.BASE_PRICES:
             raise ValueError(f"Invalid membership type: {membership_type}")
         return cls.BASE_PRICES[membership_type]
