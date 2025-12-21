@@ -5,7 +5,7 @@ from typing import Optional
 class PricingService:
 
     BASE_PRICES = {
-        'STANDARD': Decimal('100. 00'),
+        'STANDARD': Decimal('100.00'),
         'PREMIUM': Decimal('200.00'),
         'STUDENT': Decimal('75.00'),
     }
