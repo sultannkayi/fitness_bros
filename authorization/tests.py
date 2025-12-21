@@ -27,7 +27,7 @@ class UserModelTests(TestCase):
         )
         with self.assertRaises(IntegrityError):
             User.objects.create_user(
-                email='unique@example. com',
+                email='unique@example.com',
                 password='differentpass'
             )
 
