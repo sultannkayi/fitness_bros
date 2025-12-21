@@ -7,4 +7,3 @@ class MembershipsConfig(AppConfig):
 
     def ready(self):
         import memberships.signals
-
