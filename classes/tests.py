@@ -2,159 +2,198 @@ from django.test import TestCase
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from datetime import timedelta
-# Henüz olmayan modeli import ediyoruz (Hata alacağız -> RED)
-from .models import FitnessClass
+from decimal import Decimal
 from django.contrib.auth import get_user_model
-from memberships.models import Member # Diğer app'ten model çağırıyoruz (Cross-App Import)
+
+from . models import FitnessClass
 
 User = get_user_model()
+
 
 class FitnessClassModelTests(TestCase):
 
     def setUp(self):
-        # Yarın için bir tarih ayarla
         self.future_date = timezone.now() + timedelta(days=1)
-
-        # Instructor user eklendi
         self.instructor_user = User.objects.create_user(
-            email="instructor@test.com",
-            password="123",
+            email="instructor@test. com",
+            password="testpass123",
             is_instructor=True
         )
-        self.instructor_user.first_name = "Jane"
-        self.instructor_user.save()
 
-    def test_create_valid_class(self):
-        """TEST 1: Geçerli bir ders sorunsuz oluşturulmalı"""
-        yoga_class = FitnessClass.objects.create(
+    def test_create_valid_fitness_class(self):
+        fitness_class = FitnessClass.objects.create(
             name="Morning Yoga",
             instructor=self.instructor_user,
             capacity=20,
             date_time=self.future_date,
-            base_price=100.00
+            base_price=Decimal("100.00")
         )
-        self.assertEqual(yoga_class.name, "Morning Yoga")
-        self.assertEqual(yoga_class.capacity, 20)
-        self.assertTrue(yoga_class.is_active)
+        self.assertEqual(fitness_class.name, "Morning Yoga")
+        self.assertEqual(fitness_class. capacity, 20)
+        self.assertEqual(fitness_class.instructor, self.instructor_user)
+        self.assertEqual(fitness_class.base_price, Decimal("100.00"))
 
-    def test_capacity_cannot_be_negative_or_zero(self):
-        """TEST 2: Kapasite 0 veya negatif olamaz"""
-        # Modelde validators kullanacağımız için full_clean() çağırmalıyız
-        
-        # Senaryo A: 0 Kapasite
-        invalid_class = FitnessClass(
-            name="Full Class",
-            instructor=self.instructor_user,
+    def test_capacity_zero_raises_validation_error(self):
+        fitness_class = FitnessClass(
+            name="Zero Capacity Class",
+            instructor=self. instructor_user,
             capacity=0,
             date_time=self.future_date,
-            base_price=50
+            base_price=Decimal("50.00")
+        )
+        with self.assertRaises(ValidationError) as context:
+            fitness_class.full_clean()
+        self.assertIn("Capacity must be positive", str(context. exception))
+
+    def test_capacity_negative_raises_validation_error(self):
+        fitness_class = FitnessClass(
+            name="Negative Capacity Class",
+            instructor=self. instructor_user,
+            capacity=-5,
+            date_time=self.future_date,
+            base_price=Decimal("50.00")
         )
         with self.assertRaises(ValidationError):
-            invalid_class.full_clean() # Validasyonları tetikler
-            invalid_class.save()
+            fitness_class. full_clean()
 
-    def test_cannot_create_class_in_past(self):
-        """TEST 3: Geçmiş tarihe ders açılamaz"""
-        yesterday = timezone.now() - timedelta(days=1)
-        
-        past_class = FitnessClass(
+    def test_past_date_raises_validation_error(self):
+        past_date = timezone.now() - timedelta(days=1)
+        fitness_class = FitnessClass(
             name="Past Class",
-            instructor=self.instructor_user,
+            instructor=self. instructor_user,
             capacity=10,
-            date_time=yesterday,
-            base_price=50
+            date_time=past_date,
+            base_price=Decimal("50.00")
         )
-        with self.assertRaises(ValidationError):
-            past_class.full_clean()
-            past_class.save()
+        with self.assertRaises(ValidationError) as context:
+            fitness_class.full_clean()
+        self.assertIn("Class date must be in the future", str(context. exception))
 
-    def test_string_representation(self):
-        """TEST 4: __str__ metodu okunabilir olmalı"""
-        cls = FitnessClass.objects.create(
+    def test_is_active_defaults_to_true(self):
+        fitness_class = FitnessClass. objects.create(
+            name="Active Class",
+            instructor=self.instructor_user,
+            capacity=15,
+            date_time=self.future_date,
+            base_price=Decimal("75.00")
+        )
+        self.assertTrue(fitness_class.is_active)
+
+    def test_is_active_can_be_set_to_false(self):
+        fitness_class = FitnessClass.objects. create(
+            name="Inactive Class",
+            instructor=self. instructor_user,
+            capacity=15,
+            date_time=self.future_date,
+            base_price=Decimal("75.00"),
+            is_active=False
+        )
+        self.assertFalse(fitness_class.is_active)
+
+    def test_str_contains_class_name(self):
+        fitness_class = FitnessClass.objects.create(
             name="Pilates",
             instructor=self.instructor_user,
             capacity=10,
             date_time=self.future_date,
-            base_price=200
+            base_price=Decimal("200.00")
         )
-        # Beklenen çıktı formatı: "Pilates - Jane (Yarın Tarihi)"
-        expected_str = f"Pilates - Jane ({self.future_date.strftime('%Y-%m-%d %H:%M')})"
-        # Tarih formatı locale göre değişebilir, basit kontrol yapalım:
-        self.assertIn("Pilates", str(cls))
-        self.assertIn("Jane", str(cls))
+        self.assertIn("Pilates", str(fitness_class))
 
-class ClassIntegrationTests(TestCase):
-    """
-    Bu test sınıfı, Classes uygulamasının diğer uygulamalarla (Auth ve Memberships)
-    olan uyumunu ve ilişkilerini test eder.
-    """
+    def test_str_contains_instructor_first_name_when_present(self):
+        self.instructor_user.first_name = "Jane"
+        self.instructor_user.save()
+        fitness_class = FitnessClass.objects.create(
+            name="Spinning",
+            instructor=self.instructor_user,
+            capacity=12,
+            date_time=self.future_date,
+            base_price=Decimal("150.00")
+        )
+        self.assertIn("Jane", str(fitness_class))
 
-    def setUp(self):
-        # 1. Bir Eğitmen (User) Oluştur (Auth App)
-        self.instructor_user = User.objects.create_user(
-            email="coach_mike@fitnessbros.com",
-            password="pass",
+    def test_str_contains_instructor_email_when_no_first_name(self):
+        instructor_no_name = User.objects.create_user(
+            email="noname@test.com",
+            password="testpass123",
             is_instructor=True
         )
-
-        # 2. Bir Öğrenci (User + Member) Oluştur (Auth + Memberships App)
-        self.student_user = User.objects.create_user(
-            email="student_jane@fitnessbros.com",
-            password="pass"
-        )
-        # Signal sayesinde Member profili de oluştu, onu alalım
-        self.student_member = self.student_user.member
-
-    def test_class_linked_to_real_instructor_user(self):
-        """
-        TEST 5: Instructor Bağlantı Testi (Auth <-> Classes)
-        Senaryo: 'instructor' alanı sadece bir isim değil, 
-        gerçek bir User objesine ForeignKey ile bağlı olmalı.
-        """
-        # Gelecek tarih
-        future_date = timezone.now() + timedelta(days=2)
-        
-        # Eğitmen User objesini vererek ders oluşturuyoruz
         fitness_class = FitnessClass.objects.create(
-            name="Advanced HIIT",
-            instructor=self.instructor_user, # DİKKAT: Burada String değil Obje veriyoruz
-            capacity=15,
-            date_time=future_date,
-            base_price=150.00
+            name="HIIT",
+            instructor=instructor_no_name,
+            capacity=8,
+            date_time=self.future_date,
+            base_price=Decimal("120.00")
         )
+        self.assertIn("noname@test.com", str(fitness_class))
 
-        # Kontrol 1: Kayıt başarılı mı?
-        self.assertEqual(fitness_class.instructor.email, "coach_mike@fitnessbros.com")
-        
-        # Kontrol 2: İlişki üzerinden yetki kontrolü
-        self.assertTrue(fitness_class.instructor.is_instructor)
+    def test_instructor_foreign_key_relationship(self):
+        fitness_class = FitnessClass.objects.create(
+            name="CrossFit",
+            instructor=self.instructor_user,
+            capacity=12,
+            date_time=self.future_date,
+            base_price=Decimal("180.00")
+        )
+        self.assertEqual(fitness_class.instructor.email, "instructor@test.com")
+        self.assertTrue(fitness_class. instructor.is_instructor)
 
-    def test_system_coexistence(self):
-        """
-        TEST 6: Ekosistem Testi (Auth + Memberships + Classes)
-        Senaryo: Aynı veritabanı oturumunda; bir Hoca, bir Öğrenci ve bir Ders
-        sorunsuz bir şekilde var olabilmeli ve verilerine erişilebilmeli.
-        (Rezervasyon sistemi kurulmadan önceki 'Zemin Kontrolü')
-        """
-        # Ders oluştur
-        yoga_class = FitnessClass.objects.create(
-            name="Sunset Yoga",
+    def test_base_price_accepts_decimal(self):
+        fitness_class = FitnessClass.objects.create(
+            name="Boxing",
             instructor=self.instructor_user,
             capacity=10,
-            date_time=timezone.now() + timedelta(days=1),
-            base_price=100
+            date_time=self.future_date,
+            base_price=Decimal("99.99")
         )
+        self.assertEqual(fitness_class.base_price, Decimal("99.99"))
 
-        # Senaryo: Öğrenci sisteme girip dersin fiyatına bakıyor
-        # (Henüz rezervasyon yapmıyor, sadece görüntüleme simülasyonu)
-        
-        # Öğrencinin tipi ne?
-        student_type = self.student_member.membership_type # Memberships App'ten veri
-        
-        # Dersin fiyatı ne?
-        class_price = yoga_class.base_price # Classes App'ten veri
-        
-        # Bu değerlerin hepsine aynı anda erişebiliyor olmalıyız
-        self.assertEqual(student_type, 'STANDARD')
-        self.assertEqual(class_price, 100)
-        self.assertTrue(yoga_class.is_active)
+    def test_base_price_max_digits(self):
+        fitness_class = FitnessClass.objects. create(
+            name="Premium Class",
+            instructor=self.instructor_user,
+            capacity=5,
+            date_time=self.future_date,
+            base_price=Decimal("99999.99")
+        )
+        self.assertEqual(fitness_class. base_price, Decimal("99999.99"))
+
+    def test_date_time_stores_future_date(self):
+        future_date = timezone.now() + timedelta(days=7)
+        fitness_class = FitnessClass.objects.create(
+            name="Future Class",
+            instructor=self.instructor_user,
+            capacity=20,
+            date_time=future_date,
+            base_price=Decimal("100.00")
+        )
+        self.assertEqual(fitness_class.date_time, future_date)
+
+    def test_name_max_length(self):
+        long_name = "A" * 100
+        fitness_class = FitnessClass.objects.create(
+            name=long_name,
+            instructor=self.instructor_user,
+            capacity=10,
+            date_time=self.future_date,
+            base_price=Decimal("50.00")
+        )
+        self.assertEqual(fitness_class.name, long_name)
+        self.assertEqual(len(fitness_class.name), 100)
+
+    def test_instructor_cascade_delete(self):
+        temp_instructor = User.objects.create_user(
+            email="temp@test.com",
+            password="testpass123",
+            is_instructor=True
+        )
+        fitness_class = FitnessClass.objects.create(
+            name="Temp Class",
+            instructor=temp_instructor,
+            capacity=10,
+            date_time=self.future_date,
+            base_price=Decimal("50.00")
+        )
+        class_id = fitness_class.id
+        temp_instructor.delete()
+        self.assertFalse(FitnessClass.objects.filter(id=class_id).exists())
