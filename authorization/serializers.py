@@ -1,18 +1,21 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from rest_framework_simplejwt.tokens import RefreshToken
+from django. contrib.auth import get_user_model
+from rest_framework_simplejwt. tokens import RefreshToken
 
 User = get_user_model()
 
+
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    first_name = serializers.CharField(required=False, allow_blank=True, default='')
+    last_name = serializers.CharField(required=False, allow_blank=True, default='')
 
     class Meta:
         model = User
         fields = ("email", "password", "first_name", "last_name")
 
     def create(self, validated_data):
-        user = User.objects.create_user(
+        user = User. objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
             first_name=validated_data.get("first_name", ""),
@@ -24,7 +27,7 @@ class RegisterSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         token = RefreshToken.for_user(instance)
         return {
-            "token": str(token.access_token),
+            "token": str(token. access_token),
             "user": {
                 "email": instance.email,
                 "first_name": instance.first_name,
@@ -34,7 +37,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
 
 
-class LoginSerializer(serializers.Serializer):
+class LoginSerializer(serializers. Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
 

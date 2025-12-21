@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'authorization',
     'memberships.apps.MembershipsConfig',
-
+    'classes',
+    'reservations'
 ]
 
 MIDDLEWARE = [
