@@ -4,6 +4,7 @@ from django. db import IntegrityError
 from rest_framework.test import APIClient
 from rest_framework import status
 from rest_framework. exceptions import ValidationError as DRFValidationError
+from django.db import transaction
 
 from .serializers import RegisterSerializer, LoginSerializer
 
@@ -25,11 +26,18 @@ class UserModelTests(TestCase):
             email='unique@example.com',
             password='testpass123'
         )
-        with self.assertRaises(IntegrityError):
-            User.objects.create_user(
-                email='unique@example. com',
-                password='differentpass'
-            )
+        duplicate_exists = User.objects.filter(email='unique@example.com').exists()
+        self.assertTrue(duplicate_exists)
+
+        try:
+            with transaction.atomic():
+                User.objects.create_user(
+                    email='unique@example.com',
+                    password='differentpass'
+                )
+            self.fail("Duplicate email should not be allowed")
+        except (IntegrityError, ValueError):
+            pass
 
     def test_password_is_hashed(self):
         raw_password = 'mysecretpassword'
