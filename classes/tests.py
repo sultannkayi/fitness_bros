@@ -15,7 +15,7 @@ class FitnessClassModelTests(TestCase):
     def setUp(self):
         self.future_date = timezone.now() + timedelta(days=1)
         self.instructor_user = User.objects.create_user(
-            email="instructor@test. com",
+            email="instructor@test.com",
             password="testpass123",
             is_instructor=True
         )
@@ -135,8 +135,8 @@ class FitnessClassModelTests(TestCase):
             date_time=self.future_date,
             base_price=Decimal("180.00")
         )
-        self.assertEqual(fitness_class.instructor.email, "instructor@test.com")
-        self.assertTrue(fitness_class. instructor.is_instructor)
+        self.assertEqual(fitness_class.instructor.email,"instructor@test.com")
+        self.assertTrue(fitness_class.instructor.is_instructor)
 
     def test_base_price_accepts_decimal(self):
         fitness_class = FitnessClass.objects.create(
