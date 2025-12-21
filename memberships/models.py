@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 
-
 class Member(models.Model):
 
     MEMBERSHIP_CHOICES = [
@@ -14,7 +13,7 @@ class Member(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='member',
-        unique=True
+        unique=True  # duplicate prevention
     )
 
     membership_type = models.CharField(
@@ -26,4 +25,4 @@ class Member(models.Model):
     is_active_member = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.user.email} - {self. membership_type}"
+        return f"{self.user.email} - {self.membership_type}"
