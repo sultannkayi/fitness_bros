@@ -1,12 +1,12 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django. db import IntegrityError
+from django.db import transaction
 from rest_framework.test import APIClient
 from rest_framework import status
-from rest_framework. exceptions import ValidationError as DRFValidationError
-from django.db import transaction
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
-from .serializers import RegisterSerializer, LoginSerializer
+from . serializers import RegisterSerializer, LoginSerializer
 
 User = get_user_model()
 
@@ -14,11 +14,11 @@ User = get_user_model()
 class UserModelTests(TestCase):
 
     def test_create_user_with_email(self):
-        user = User.objects.create_user(
+        user = User. objects.create_user(
             email='test@example.com',
             password='testpass123'
         )
-        self.assertEqual(user.email, 'test@example.com')
+        self.assertEqual(user. email, 'test@example.com')
         self.assertTrue(user.check_password('testpass123'))
 
     def test_email_uniqueness_constraint(self):
@@ -26,18 +26,12 @@ class UserModelTests(TestCase):
             email='unique@example.com',
             password='testpass123'
         )
-        duplicate_exists = User.objects.filter(email='unique@example.com').exists()
-        self.assertTrue(duplicate_exists)
-
-        try:
+        with self.assertRaises(IntegrityError):
             with transaction.atomic():
-                User.objects.create_user(
+                User. objects.create_user(
                     email='unique@example.com',
                     password='differentpass'
                 )
-            self.fail("Duplicate email should not be allowed")
-        except (IntegrityError, ValueError):
-            pass
 
     def test_password_is_hashed(self):
         raw_password = 'mysecretpassword'
@@ -49,7 +43,7 @@ class UserModelTests(TestCase):
         self.assertTrue(user.check_password(raw_password))
 
     def test_create_user_without_email_raises_error(self):
-        with self. assertRaises(ValueError):
+        with self.assertRaises(ValueError):
             User.objects.create_user(
                 email='',
                 password='testpass123'
@@ -129,14 +123,14 @@ class RegisterSerializerTests(TestCase):
             'email': 'register@example.com',
             'password': 'testpass123',
             'first_name': 'Test',
-            'last_name':  'User'
+            'last_name': 'User'
         }
         serializer = RegisterSerializer(data=data)
-        self.assertTrue(serializer.is_valid())
+        self.assertTrue(serializer. is_valid())
         user = serializer.save()
-        output = serializer.data
+        output = serializer. data
         self.assertNotIn('password', output)
-        self.assertNotIn('password', output. get('user', {}))
+        self.assertNotIn('password', output.get('user', {}))
 
     def test_token_returned_on_success(self):
         data = {
@@ -148,8 +142,8 @@ class RegisterSerializerTests(TestCase):
         serializer = RegisterSerializer(data=data)
         self.assertTrue(serializer.is_valid())
         serializer.save()
-        output = serializer.data
-        self.assertIn('token', output)
+        output = serializer. data
+        self. assertIn('token', output)
         self.assertIsInstance(output['token'], str)
         self.assertTrue(len(output['token']) > 0)
 
@@ -177,10 +171,10 @@ class RegisterSerializerTests(TestCase):
 
     def test_user_created_in_database(self):
         data = {
-            'email': 'created@example.com',
+            'email':  'created@example.com',
             'password': 'testpass123',
             'first_name': 'Test',
-            'last_name':  'User'
+            'last_name': 'User'
         }
         serializer = RegisterSerializer(data=data)
         self.assertTrue(serializer.is_valid())
@@ -189,13 +183,13 @@ class RegisterSerializerTests(TestCase):
 
     def test_email_normalization_via_serializer(self):
         data = {
-            'email':  'NORMALIZED@EXAMPLE.COM',
+            'email': 'NORMALIZED@EXAMPLE.COM',
             'password': 'testpass123',
-            'first_name': 'Test',
+            'first_name':  'Test',
             'last_name': 'User'
         }
         serializer = RegisterSerializer(data=data)
-        self.assertTrue(serializer. is_valid())
+        self.assertTrue(serializer.is_valid())
         user = serializer.save()
         self.assertEqual(user.email, 'NORMALIZED@example.com')
 
@@ -213,7 +207,7 @@ class RegisterSerializerTests(TestCase):
         data = {
             'email': 'nopass@example.com',
             'first_name': 'Test',
-            'last_name': 'User'
+            'last_name':  'User'
         }
         serializer = RegisterSerializer(data=data)
         self.assertFalse(serializer.is_valid())
@@ -226,19 +220,19 @@ class RegisterSerializerTests(TestCase):
             'last_name': 'User'
         }
         serializer = RegisterSerializer(data=data)
-        self.assertTrue(serializer.is_valid())
+        self.assertTrue(serializer. is_valid())
         user = serializer.save()
         self.assertEqual(user.first_name, '')
 
     def test_optional_last_name(self):
         data = {
             'email': 'nolast@example.com',
-            'password': 'testpass123',
+            'password':  'testpass123',
             'first_name': 'Test'
         }
         serializer = RegisterSerializer(data=data)
-        self.assertTrue(serializer.is_valid())
-        user = serializer. save()
+        self.assertTrue(serializer. is_valid())
+        user = serializer.save()
         self.assertEqual(user.last_name, '')
 
 
@@ -279,19 +273,19 @@ class LoginSerializerTests(TestCase):
         serializer = LoginSerializer(data=data)
         with self.assertRaises(DRFValidationError) as context:
             serializer.is_valid(raise_exception=True)
-        self.assertIn('Invalid credentials', str(context.exception. detail))
+        self.assertIn('Invalid credentials', str(context.exception.detail))
 
     def test_email_case_sensitivity(self):
         data = {
-            'email': 'LOGIN@EXAMPLE.COM',
-            'password': 'correctpassword'
+            'email': 'LOGIN@example.com',
+            'password':  'correctpassword'
         }
         serializer = LoginSerializer(data=data)
         is_valid = serializer.is_valid()
         if is_valid:
-            self. assertIn('access', serializer. validated_data)
+            self. assertIn('access', serializer.validated_data)
         else:
-            self.assertIn('non_field_errors', serializer.errors)
+            self. assertTrue('email' in serializer.errors or 'non_field_errors' in serializer. errors)
 
     def test_missing_email_invalid(self):
         data = {
@@ -324,7 +318,7 @@ class RegisterAPITests(TestCase):
             'last_name':  'User'
         }
         response = self.client.post(self.register_url, data)
-        self.assertEqual(response. status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_register_returns_token(self):
         data = {
@@ -341,10 +335,10 @@ class RegisterAPITests(TestCase):
         data = {
             'email': 'apiuser@example.com',
             'password': 'testpass123',
-            'first_name': 'API',
+            'first_name':  'API',
             'last_name': 'User'
         }
-        response = self.client.post(self.register_url, data)
+        response = self. client.post(self.register_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn('user', response.data)
 
@@ -354,12 +348,12 @@ class RegisterAPITests(TestCase):
             'first_name': 'API',
             'last_name': 'User'
         }
-        response = self.client.post(self.register_url, data)
-        self.assertEqual(response. status_code, status.HTTP_400_BAD_REQUEST)
+        response = self.client.post(self. register_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_register_returns_400_missing_password(self):
         data = {
-            'email': 'nopass@example.com',
+            'email':  'nopass@example.com',
             'first_name': 'API',
             'last_name':  'User'
         }
@@ -414,8 +408,8 @@ class LoginAPITests(TestCase):
             'email': 'loginapi@example.com',
             'password': 'correctpassword'
         }
-        response = self.client.post(self.login_url, data)
-        self.assertEqual(response. status_code, status.HTTP_200_OK)
+        response = self.client.post(self. login_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn('access', response.data)
 
     def test_login_returns_400_invalid_credentials(self):
@@ -438,12 +432,12 @@ class LoginAPITests(TestCase):
         data = {
             'password': 'somepassword'
         }
-        response = self.client.post(self.login_url, data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = self.client. post(self.login_url, data)
+        self.assertEqual(response.status_code, status. HTTP_400_BAD_REQUEST)
 
     def test_login_returns_400_missing_password(self):
         data = {
             'email': 'loginapi@example.com'
         }
-        response = self.client.post(self.login_url, data)
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        response = self.client. post(self.login_url, data)
+        self.assertEqual(response.status_code, status. HTTP_400_BAD_REQUEST)

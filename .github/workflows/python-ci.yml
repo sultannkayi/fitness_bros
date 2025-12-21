@@ -1,0 +1,88 @@
+name: Django CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v5
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-django pytest-cov
+
+    - name: Run Django migrations
+      run: |
+        export DJANGO_SETTINGS_MODULE=main.settings
+        python manage.py migrate --noinput
+
+    - name: Run tests with pytest + coverage
+      run: |
+        export DJANGO_SETTINGS_MODULE=main.settings
+        pytest -q --cov=. --cov-report=xml --cov-report=term
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage.xml
+
+    # Frontend testleri
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm install
+
+    - name: Build frontend
+      run: |
+        cd frontend
+        npm run build
+
+    # E-posta bildirimi (sadece hata durumunda)
+    - name: Send email notification on failure
+      if: failure()
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        server_port: 587
+        username: ${{ secrets.MAIL_USERNAME }}
+        password: ${{ secrets.MAIL_PASSWORD }}
+        subject: "❌ CI Pipeline Failed - ${{ github.repository }}"
+        to: sultankayi01@gmail.com,mmertkaplan01@gmail.com,akinmenge8552@gmail.com
+        # to: email1@example.com,email2@example.com
+        from: GitHub Actions
+        body: |
+          Pipeline failed!
+          
+          Repository: ${{ github.repository }}
+          Branch: ${{ github.ref }}
+          Commit: ${{ github.sha }}
+          Author: ${{ github.actor }}
+          Workflow: ${{ github.workflow }}
+          
+          Check details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    - name: Run mutation tests
+      run: |
+        pip install mutmut
+        export DJANGO_SETTINGS_MODULE=main.settings
+        mutmut run --paths-to-mutate=memberships/services.py,reservations/services.py
+        mutmut results
+      continue-on-error: true
