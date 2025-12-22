@@ -1,56 +1,91 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import api from "../api";
 import "./Profile.css";
+import Swal from 'sweetalert2';
+import withReactContent from 'sweetalert2-react-content';
+
+const MySwal = withReactContent(Swal);
 
 const PLAN_TYPES = [
   {
-    id: 'baslangic',
-    name: 'Başlangıç Paketi',
-    price: '₺999/ay',
-    features: ['Temel Dersler', 'Haftalık 3 Ders', 'Soyunma Odası Erişimi']
+    id: 'student',
+    name: 'Öğrenci Paketi',
+    price: '₺500/ay',
+    features: [
+      '%20 Ders İndirimi',
+      'İptalde %50 İade (24 saat önceden)',
+      'Maksimum 3 Gelecek Tarihli Rezervasyon',
+      'Öğrenci Kimliği ile Uygun Fiyat'
+    ]
+  },
+  {
+    id: 'standard',
+    name: 'Standart Paket',
+    price: '₺1000/ay',
+    features: [
+      'Tam Fiyat Erişimi',
+      'İptal İadesi Yok',
+      'Maksimum 5 Gelecek Tarihli Rezervasyon',
+      'Tüm Derslere Standart Erişim'
+    ]
   },
   {
     id: 'premium',
     name: 'Premium Paket',
-    price: '₺1499/ay',
-    features: ['Tüm Dersler', 'Sınırsız Rezervasyon', 'Kişisel Dolap', 'Sauna']
-  },
-  {
-    id: 'ultimate',
-    name: 'Ultimate Paket',
-    price: '₺1999/ay',
-    features: ['VIP Erişim', 'Özel Antrenör', 'Beslenme Programı', 'Spa & Masaj']
+    price: '₺2500/ay',
+    features: [
+      'Dersler TAMAMEN ÜCRETSİZ',
+      '%100 İptal İadesi',
+      'Dinamik Fiyatlandırma Etkisi Yok',
+      'Maksimum 10 Gelecek Tarihli Rezervasyon',
+      'Öncelikli Kayıt ve Sınırsız Erişim'
+    ]
   },
 ];
 
 export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
+
   const [userData, setUserData] = useState(null);
   const [reservations, setReservations] = useState([]);
   const [fitnessClasses, setFitnessClasses] = useState([]);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
 
-  const loadData = useCallback(() => {
-    const token = localStorage.getItem("token");
-    const storedUserData = localStorage.getItem("userData");
-    if (!token || !storedUserData) {
-      navigate("/auth");
+  useEffect(() => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+      navigate("/auth", { replace: true });
       return;
     }
-    const parsedData = JSON.parse(storedUserData);
-    setUserData(parsedData);
+    loadData();
+  }, [navigate]);
 
-    const storedReservations = localStorage.getItem("reservations");
-    if (storedReservations) {
-      setReservations(JSON.parse(storedReservations));
-    } else {
-      setReservations([]);
+  const loadData = useCallback(async () => {
+    try {
+      const currentToken = localStorage.getItem("access_token");
+      if (!currentToken) {
+        navigate("/auth");
+        return;
+      }
+
+      const userResponse = await api.get("/memberships/me/");
+      setUserData(userResponse.data);
+
+      const resResponse = await api.get("/reservations/");
+      setReservations(resResponse.data);
+
+      const classesResponse = await api.get("/classes/");
+      setFitnessClasses(classesResponse.data);
+    } catch (err) {
+      console.error("Veri yükleme hatası:", err);
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem("access_token");
+        navigate("/auth");
+      }
     }
-
-    const storedClasses = JSON.parse(localStorage.getItem("fitnessClasses")) || [];
-    setFitnessClasses(storedClasses);
   }, [navigate]);
 
   useEffect(() => {
@@ -58,84 +93,162 @@ export default function Profile() {
   }, [location, loadData]);
 
   useEffect(() => {
-    const handleFocus = () => {
-      loadData();
-    };
-
-    const handleStorageChange = (e) => {
-      if (e.key === "reservations" || e.key === "fitnessClasses") {
-        loadData();
-      }
-    };
-
+    const handleFocus = () => loadData();
     window.addEventListener("focus", handleFocus);
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("focus", handleFocus);
-      window.removeEventListener("storage", handleStorageChange);
-    };
+    return () => window.removeEventListener("focus", handleFocus);
   }, [loadData]);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    navigate("/auth");
+    localStorage.removeItem("access_token");
+    navigate("/auth", { replace: true });
   };
 
-  const handlePlanUpdate = () => {
+  // PAKET GÜNCELLEME
+  const handlePlanUpdate = async () => {
     if (!selectedPlan) return;
 
-    const confirmed = window.confirm(`${selectedPlan.name} (${selectedPlan.price}) paketine geçmek istediğinize emin misiniz?`);
-    if (!confirmed) return;
-
-    const updatedUserData = {
-      ...userData,
-      membership_type: selectedPlan.id,
-      membership_name: selectedPlan.name,
-      membership_price: selectedPlan.price
-    };
-
-    localStorage.setItem("userData", JSON.stringify(updatedUserData));
-    setUserData(updatedUserData);
-    setShowPlanModal(false);
-    setSelectedPlan(null);
-    alert("Üyelik planınız başarıyla güncellendi!");
-  };
-
-  const handleCancelReservation = (id) => {
-    const confirmCancel = window.confirm("Rezervasyonunuzu iptal etmek istediğinize emin misiniz?");
-    if (!confirmCancel) return;
-
-    const reservationToCancel = reservations.find((r) => r.id === id);
-    if (!reservationToCancel) return;
-
-    const updatedReservations = reservations.filter((reservation) => reservation.id !== id);
-    setReservations(updatedReservations);
-    localStorage.setItem("reservations", JSON.stringify(updatedReservations));
-
-    const updatedClasses = fitnessClasses.map((cls) => {
-      if (cls.name !== reservationToCancel.className) return cls;
-      return {
-        ...cls,
-        schedule: cls.schedule.map((sch) =>
-          sch.day === reservationToCancel.day && sch.time === reservationToCancel.time
-            ? { ...sch, available: sch.available + 1 }
-            : sch
-        ),
-      };
+    const now = new Date();
+    const activeReservations = reservations.filter(r => {
+      const dateString = r.fitness_class?.date_time || r.day;
+      if (!dateString) return false;
+      const classDate = new Date(dateString);
+      return classDate > now;
     });
 
-    setFitnessClasses(updatedClasses);
-    localStorage.setItem("fitnessClasses", JSON.stringify(updatedClasses));
+    if (activeReservations.length > 0) {
+      const result = await MySwal.fire({
+        icon: 'warning',
+        title: 'Dikkat!',
+        text: 'Gelecek tarihli aktif rezervasyonlarınız bulunmaktadır. Paket değişikliği bu rezervasyonları etkileyebilir.',
+        showCancelButton: true,
+        confirmButtonText: 'Yine de Devam Et',
+        cancelButtonText: 'Vazgeç',
+      });
+      if (!result.isConfirmed) return;
+    }
+
+    const confirmResult = await MySwal.fire({
+      icon: 'question',
+      title: 'Onaylıyor musunuz?',
+      text: `${selectedPlan.name} (${selectedPlan.price}) paketine geçmek istediğinize emin misiniz?`,
+      showCancelButton: true,
+      confirmButtonText: 'Evet, Geç',
+      cancelButtonText: 'İptal',
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+      await api.patch("/memberships/me/", {
+        membership_type: selectedPlan.id
+      });
+
+      await loadData();
+      setShowPlanModal(false);
+      setSelectedPlan(null);
+
+      MySwal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: `Tebrikler! Üyeliğiniz ${selectedPlan.name} olarak güncellendi.`,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    } catch (err) {
+      console.error("Plan güncelleme hatası:", err);
+      let errorMessage = "Üyelik planı güncellenirken bir hata oluştu.";
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') errorMessage = err.response.data;
+        else if (err.response.data.detail) errorMessage = err.response.data.detail;
+        else if (err.response.data.message) errorMessage = err.response.data.message;
+      }
+      if (activeReservations.length > 0) {
+        errorMessage += "\n\nİPUCU: Gelecek rezervasyonlarınız nedeniyle değişiklik engellenmiş olabilir.";
+      }
+
+      MySwal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: errorMessage,
+      });
+    }
+  };
+
+  // REZERVASYON İPTAL
+  const handleCancelReservation = async (id) => {
+    const reservation = reservations.find(r => r.id === id);
+    if (!reservation) return;
+
+    const pricePaid = parseFloat(reservation.price_paid || 0);
+    const dateString = reservation.fitness_class?.date_time || reservation.day;
+    const classDate = new Date(dateString);
+    const now = new Date();
+    const hoursRemaining = (classDate - now) / (1000 * 60 * 60);
+
+    const membershipType = userData?.membership_type || 'standard';
+
+    let refundAmount = 0;
+    if (membershipType === 'premium' && hoursRemaining >= 2) refundAmount = pricePaid;
+    else if (membershipType === 'student' && hoursRemaining >= 24) refundAmount = pricePaid * 0.5;
+
+    const message = `
+REZERVASYON İPTAL DETAYLARI
+--------------------------------
+Ders: ${reservation.fitness_class?.name || 'Fitness Dersi'}
+Ödenen Tutar: ${pricePaid.toFixed(2)}₺
+Kalan Süre: ${hoursRemaining > 0 ? hoursRemaining.toFixed(1) + ' saat' : 'Süre doldu'}
+
+İADE DURUMU:
+--------------------------------
+Paketiniz: ${PLAN_TYPES.find(p => p.id === membershipType)?.name || membershipType}
+Tahmini İade: ${refundAmount.toFixed(2)}₺
+
+İptal işlemini onaylıyor musunuz?`;
+
+    const confirmResult = await MySwal.fire({
+      icon: 'warning',
+      title: 'İptal Onayı',
+      html: message.replace(/\n/g, '<br>'),
+      showCancelButton: true,
+      confirmButtonText: 'Evet, İptal Et',
+      cancelButtonText: 'Vazgeç',
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    try {
+      await api.delete(`/reservations/${id}/`);
+      await loadData();
+      MySwal.fire({
+        icon: 'success',
+        title: 'İptal Edildi',
+        text: `Rezervasyon iptal edildi.${refundAmount > 0 ? ` ${refundAmount.toFixed(2)}₺ iade edilecektir.` : ''}`,
+        timer: 3000,
+        timerProgressBar: true,
+      });
+    } catch (err) {
+      console.error("İptal hatası:", err);
+      MySwal.fire({
+        icon: 'error',
+        title: 'Hata',
+        text: 'İptal sırasında bir sorun oluştu.',
+      });
+    }
   };
 
   const getCurrentPlanInfo = () => {
-    if (!userData.membership_type) return "Plan Seçilmedi";
+    if (!userData?.membership_type) return "Plan Seçilmedi";
     const plan = PLAN_TYPES.find(p => p.id === userData.membership_type);
     return plan ? `${plan.name}` : "Plan Seçilmedi";
   };
 
-  if (!userData) return null;
+  if (!userData) {
+    return (
+      <div className="profile-page">
+        <p>Yükleniyor...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="profile-page">
@@ -183,10 +296,9 @@ export default function Profile() {
                   </svg>
                 )}
               </div>
-              <h2 className="profile-name">{userData.name}</h2>
-              <p className="profile-age">{userData.age}</p>
+              <h2 className="profile-name">{userData.name || userData.username}</h2>
               <button className="profile-plan-button" onClick={() => setShowPlanModal(true)}>
-                {getCurrentPlanInfo()}
+                {getCurrentPlanInfo()} <span style={{marginLeft: '5px', fontSize: '0.8em'}}>✎</span>
               </button>
             </div>
             <div className="profile-stats">
@@ -198,15 +310,11 @@ export default function Profile() {
                 <div className="stat-icon height-icon">📏</div>
                 <span className="stat-value">{userData.height}</span>
               </div>
-              <div className="stat-item">
-                <div className="stat-icon age-icon">⚡</div>
-                <span className="stat-value">{userData.age}</span>
-              </div>
             </div>
             <div className="profile-details">
               <div className="detail-row">
                 <span className="detail-label">Name</span>
-                <span className="detail-value">{userData.name}</span>
+                <span className="detail-value">{userData.name || userData.username}</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Gender</span>
@@ -214,7 +322,7 @@ export default function Profile() {
               </div>
               <div className="detail-row">
                 <span className="detail-label">Date of birth</span>
-                <span className="detail-value">{userData.dateOfBirth}</span>
+                <span className="detail-value">{userData.dateOfBirth || userData.birth_date}</span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Height</span>
@@ -231,25 +339,33 @@ export default function Profile() {
                 className="go-to-reservations"
                 onClick={() => navigate("/reservations")}
               >
-                Rezervasyon Yap
+                + Yeni Rezervasyon
               </button>
               {reservations.length > 0 ? (
                 <div className="reservations-list">
                   {reservations.map((r) => (
                     <div key={r.id} className="reservation-item">
                       <div className="reservation-header">
-                        <h4 className="reservation-class-name">{r.className}</h4>
+                        <h4 className="reservation-class-name">
+                            {r.fitness_class?.name || r.className || 'Ders'}
+                        </h4>
                         <span className="reservation-status confirmed">
-                          {r.status}
+                          Onaylı
                         </span>
                       </div>
                       <p className="reservation-instructor">
-                        👤 Eğitmen: {r.instructor}
+                        👤 Eğitmen: {r.fitness_class?.instructor || r.instructor || '-'}
                       </p>
                       <div className="reservation-details">
-                        <span>📅 {r.day}</span>
-                        <span>🕐 {r.time}</span>
+                        {/* Tarih formatı backend'den gelene göre ayarlanabilir */}
+                        <span>📅 {new Date(r.fitness_class?.date_time || r.day || Date.now()).toLocaleDateString('tr-TR')}</span>
+                        <span>🕐 {new Date(r.fitness_class?.date_time || r.time || Date.now()).toLocaleTimeString('tr-TR', {hour: '2-digit', minute:'2-digit'})}</span>
                       </div>
+                      
+                      <div style={{fontSize: '0.9em', color: '#666', marginBottom: '10px'}}>
+                         Ödenen: <strong>{r.price_paid}₺</strong>
+                      </div>
+
                       <button
                         className="cancel-reservation-button"
                         onClick={() => handleCancelReservation(r.id)}
@@ -306,7 +422,9 @@ export default function Profile() {
             maxWidth: '600px',
             width: '100%',
             border: '2px solid #333',
-            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)'
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
+            maxHeight: '90vh',
+            overflowY: 'auto'
           }}>
             <h2 style={{
               color: '#fff',

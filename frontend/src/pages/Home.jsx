@@ -22,34 +22,40 @@ export default function Home() {
   ];
 
   const membershipPlans = [
-    {
-      name: "BAŞLANGIÇ PAKETİ",
-      price: "999",
+  {
+      id: 'student',
+      name: 'Öğrenci Paketi',
+      price: '₺500/ay',
       features: [
-        "Spor salonuna sınırsız erişim",
-        "Haftada 5 ders hakkı"
+        '%20 Ders İndirimi',
+        'İptalde %50 İade (24 saat önceden)',
+        'Maksimum 3 Gelecek Tarihli Rezervasyon',
+        'Öğrenci Kimliği ile Uygun Fiyat'
       ]
     },
     {
-      name: "PREMIUM PAKET",
-      price: "1499",
+      id: 'standard',
+      name: 'Standart Paket',
+      price: '₺1000/ay',
       features: [
-        "Spor salonuna sınırsız erişim",
-        "Haftada 5 ders hakkı",
-        "1 Yıllık Üyelik Avantajı"
+        'Tam Fiyat Erişimi',
+        'İptal İadesi Yok',
+        'Maksimum 5 Gelecek Tarihli Rezervasyon',
+        'Tüm Derslere Standart Erişim'
       ]
     },
     {
-      name: "ULTIMATE PAKET",
-      price: "1999",
+      id: 'premium',
+      name: 'Premium Paket',
+      price: '₺2500/ay',
       features: [
-        "Spor salonuna sınırsız erişim",
-        "Haftada 5 ders hakkı",
-        "1 Yıllık Üyelik Avantajı",
-        "ÜCRETSİZ içecek paketi",
-        "2 Ücretsiz kişisel antrenman"
+        'Dersler TAMAMEN ÜCRETSİZ',
+        '%100 İptal İadesi',
+        'Dinamik Fiyatlandırma Etkisi Yok',
+        'Maksimum 10 Gelecek Tarihli Rezervasyon',
+        'Öncelikli Kayıt ve Sınırsız Erişim'
       ]
-    }
+    },
   ];
 
   return (
@@ -193,7 +199,9 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <button className="plan-cta">HEMEN BAŞLA</button>
+              <Link to="/profile">
+                  <button className="plan-cta">HEMEN BAŞLA</button>
+              </Link>
             </div>
           ))}
         </div>

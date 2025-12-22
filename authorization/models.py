@@ -32,3 +32,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
+
+    # ← BU SATIRI EKLE (member_profile erişimi için)
+    def member_profile(self):
+        return self.member_set.first()  # Member modelindeki user foreign key'e göre

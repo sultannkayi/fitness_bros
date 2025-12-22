@@ -1,7 +1,7 @@
 from django.db import models
 from django.core.exceptions import ValidationError
 from decimal import Decimal
-from .services import PricingEngine
+from memberships.services import PricingEngine
 
 class Reservation(models.Model):
     member = models.ForeignKey(
@@ -43,18 +43,17 @@ class Reservation(models.Model):
 
     def save(self, *args, **kwargs):
         if self.price_paid is None:
+            # Mevcut rezervasyon sayısını al (kendisini hariç tut)
+            booked = self.fitness_class.reservations.exclude(pk=self.pk).count()
             total = self.fitness_class.capacity
-            booked = self.fitness_class.reservations.count()
-            occupancy_rate = booked / total if total > 0 else 1
+            occupancy_rate = Decimal(booked) / Decimal(total) if total > 0 else Decimal('0')
 
-            hour = self.fitness_class.date_time.hour
-            is_peak = 18 <= hour <= 22
-
-            self.price_paid = PricingEngine.calculate_price(
+            # Doğru PricingEngine'i kullan
+            self.price_paid = PricingEngine.calculate_class_price(
                 base_price=self.fitness_class.base_price,
                 membership_type=self.member.membership_type,
-                occupancy_rate=occupancy_rate,
-                is_peak_hour=is_peak
+                class_datetime=self.fitness_class.date_time,
+                current_occupancy_rate=occupancy_rate
             )
 
         self.clean()
