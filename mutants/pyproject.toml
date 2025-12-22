@@ -1,5 +1,0 @@
-[tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "main.settings"
-python_files = ["test_*.py", "*_test.py", "tests.py"]
-testpaths = ["tests", "authorization", "memberships"]
-addopts = "--tb=short --strict-markers --disable-warnings"
