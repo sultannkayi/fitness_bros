@@ -33,8 +33,9 @@ Fitness Bros, bireylere fiziksel sağlık, güç, dayanıklılık, esneklik ve g
 Bu proje, **Test Engineering (CEN315)** dersi kapsamında geliştirilmiş olup, yazılım test süreçlerinin tüm aşamalarını (unit, integration, mutation, security, performance) içermektedir.
 
 ### 🎓 Akademik Bağlam
+
 - **Ders:** CEN315 - Test Engineering
-- **Dönem:** 2024-2025 Güz
+- **Dönem:** 2025-2026 Güz
 - **Amaç:** Test-Driven Development (TDD) ve kapsamlı test stratejilerinin gerçek bir projede uygulanması
 
 ---
@@ -42,6 +43,7 @@ Bu proje, **Test Engineering (CEN315)** dersi kapsamında geliştirilmiş olup, 
 ## ✨ Özellikler
 
 ### Backend (Django REST API)
+
 - 🔐 **Kullanıcı Yönetimi:** JWT tabanlı authentication ve authorization
 - 👥 **Üyelik Sistemi:** STUDENT, STANDARD, PREMIUM üyelik tipleri
 - 💰 **Dinamik Fiyatlandırma:** Üyelik tipine, doluluk oranına ve peak hour'a göre fiyat hesaplama
@@ -51,6 +53,7 @@ Bu proje, **Test Engineering (CEN315)** dersi kapsamında geliştirilmiş olup, 
 - ⚡ **Real-time Kapasite:** Sınıf doluluk oranları ve available spots
 
 ### Frontend (React)
+
 - 🎨 **Modern UI/UX:** Responsive tasarım, smooth animasyonlar
 - 🏠 **Ana Sayfa:** Hero section, sınıflar, hakkımızda, üyelik planları
 - 📝 **Rezervasyon Sayfası:** Sınıf seçimi, tarih/saat seçimi, rezervasyon onayı
@@ -59,6 +62,7 @@ Bu proje, **Test Engineering (CEN315)** dersi kapsamında geliştirilmiş olup, 
 - 🌐 **Türkçe Lokalizasyon:** Tam Türkçe arayüz desteği
 
 ### Test Coverage
+
 - ✅ **Unit Tests:** %90+ coverage (models, services, validators)
 - 🔗 **Integration Tests:** API endpoints, database operations
 - 🧬 **Mutation Testing:** mutmut ile kod kalitesi analizi
@@ -71,8 +75,9 @@ Bu proje, **Test Engineering (CEN315)** dersi kapsamında geliştirilmiş olup, 
 ## 🛠️ Teknoloji Stack
 
 ### Backend
+
 ```
-Python 3.12
+Python 3.10
 Django 4.2.27
 Django REST Framework 3.16.1
 djangorestframework-simplejwt 5.5.1
@@ -81,6 +86,7 @@ PostgreSQL / SQLite (development)
 ```
 
 ### Frontend
+
 ```
 React 19.2.3
 React Router DOM 7.10.1
@@ -89,6 +95,7 @@ CSS3 (Flexbox, Grid, Animations)
 ```
 
 ### Test Tools
+
 ```
 pytest 8.4.2
 pytest-django
@@ -100,6 +107,7 @@ coverage.py (code coverage)
 ```
 
 ### DevOps
+
 ```
 GitHub Actions (CI/CD)
 Docker (containerization - planned)
@@ -113,50 +121,38 @@ SMTP Email Notifications
 Bu proje, **Test Engineering** dersi için hazırlandığından, kapsamlı bir test stratejisi uygulanmıştır:
 
 ### 1. Unit Tests (Birim Testleri)
+
 - **Kapsam:** Models, Services, Validators
 - **Framework:** pytest + pytest-django
 - **Mocking:** unittest.mock ile external dependencies izolasyonu
 - **Coverage:** %90+ (hedef)
 - **Test Dosyaları:**
-  - `memberships/test_services.py` → PricingService unit testleri
-  - `reservations/test_services.py` → ReservationService, CapacityCalculator testleri
+  - `memberships/tests.py` → PricingService unit testleri
+  - `reservations/tests.py` → ReservationService testleri
 
 ### 2. Integration Tests (Entegrasyon Testleri)
+
 - **Kapsam:** API endpoints, database operations, authentication
 - **Framework:** Django REST Framework Test Client
-- **Test Dosyaları:**
-  - `tests/test_bookings.py` → Rezervasyon API testleri
-  - `tests/test_classes.py` → Sınıf API testleri
 
 ### 3. Mutation Testing (Mutasyon Testleri)
+
 - **Araç:** mutmut
 - **Hedef:** Test suite kalitesini ölçmek
 - **Kapsam:** `memberships/services.py`, `reservations/services.py`
 - **Rapor:** `MUTATION_TESTING_REPORT.md`
-
-### 4. Security Testing (Güvenlik Testleri)
-- **OWASP ZAP:** Otomatik güvenlik açığı taraması
-- **bandit:** Python static security analysis
-- **Manual Testing:** SQL injection, XSS, CSRF, JWT security
-
-### 5. Performance Testing (Performans Testleri)
-- **Load Testing:** Concurrent request simulation
-- **Response Time:** <200ms hedefi
-- **Database:** Query optimization, N+1 problem kontrolü
-
-### 6. Property-Based Testing
-- **Framework:** Hypothesis
-- **Amaç:** Edge case discovery, random input testing
 
 ---
 
 ## 📦 Kurulum
 
 ### Gereksinimler
-- Python 3.12+
+
+- Python 3.10+
+- Django 4.2
 - Node.js 18+
 - pip
-- virtualenv (önerilen)
+- virtualenv
 
 ### Backend Kurulumu
 
@@ -175,7 +171,7 @@ pip install -r requirements.txt
 # Database migrate
 python manage.py migrate
 
-# Superuser oluşturun (opsiyonel)
+# Superuser oluşturun
 python manage.py createsuperuser
 
 # Development server başlatın
@@ -203,20 +199,6 @@ Frontend şimdi `http://localhost:3000` adresinde çalışıyor.
 
 ## 🚀 Kullanım
 
-### Backend API
-
-```bash
-# Testleri çalıştırın
-pytest
-
-# Coverage raporu ile testler
-pytest --cov=. --cov-report=html
-
-# Mutation testleri
-mutmut run --paths-to-mutate=memberships/services.py,reservations/services.py
-mutmut results
-```
-
 ### Frontend
 
 ```bash
@@ -235,6 +217,7 @@ npm test
 ## 📡 API Endpoints
 
 ### Authentication
+
 ```
 POST /api/auth/register/     - Kullanıcı kaydı
 POST /api/auth/login/        - Kullanıcı girişi
@@ -243,6 +226,7 @@ GET  /api/auth/user/         - Mevcut kullanıcı bilgileri
 ```
 
 ### Memberships
+
 ```
 GET    /api/memberships/               - Üyelikleri listele
 POST   /api/memberships/               - Yeni üyelik oluştur
@@ -252,6 +236,7 @@ DELETE /api/memberships/{id}/          - Üyelik sil
 ```
 
 ### Reservations
+
 ```
 GET    /api/reservations/              - Rezervasyonları listele
 POST   /api/reservations/              - Yeni rezervasyon oluştur
@@ -261,6 +246,7 @@ DELETE /api/reservations/{id}/         - Rezervasyon iptal
 ```
 
 ### Classes
+
 ```
 GET    /api/classes/                   - Sınıfları listele
 POST   /api/classes/                   - Yeni sınıf oluştur
@@ -275,6 +261,7 @@ GET    /api/classes/{id}/capacity/    - Sınıf kapasite bilgisi
 GitHub Actions ile otomatik test ve deployment pipeline:
 
 ### Workflow Steps
+
 1. **Code Checkout:** Repository'yi çek
 2. **Python Setup:** Python 3.12 kurulumu
 3. **Dependencies:** pip install -r requirements.txt
@@ -287,7 +274,9 @@ GitHub Actions ile otomatik test ve deployment pipeline:
 10. **Email Notification:** Başarısız durumda email bildirimi
 
 ### Notification
+
 Pipeline başarısız olduğunda otomatik email gönderiliyor:
+
 - Server: Gmail SMTP
 - Recipients: Team members
 - Content: Branch, commit, author, workflow details
@@ -309,20 +298,18 @@ fitness_bros/
 ├── memberships/                     # Üyelik yönetimi
 │   ├── models.py                   # Member model
 │   ├── services.py                 # PricingService business logic
-│   ├── test_services.py            # Unit testler (TDD)
+│   ├── tests.py                    # Unit testler (TDD)
 │   └── views.py                    # Membership endpoints
 ├── reservations/                    # Rezervasyon sistemi
 │   ├── models.py                   # Reservation, Booking models
 │   ├── services.py                 # ReservationService, CapacityCalculator
-│   ├── test_services.py            # Unit + Integration testler
+│   ├── tests.py                    # Unit + Integration testler
 │   └── views.py                    # Reservation endpoints
 ├── classes/                         # Fitness sınıfları
 │   ├── models.py                   # FitnessClass model
 │   ├── serializers.py              # Class serializers
+│   ├── tests.py                    # Unit testler
 │   └── views.py                    # Class endpoints
-├── tests/                           # Integration testler
-│   ├── test_bookings.py            # Rezervasyon API testleri
-│   └── test_classes.py             # Sınıf API testleri
 ├── frontend/                        # React frontend
 │   ├── public/                     # Static files
 │   ├── src/
@@ -343,7 +330,6 @@ fitness_bros/
 │   ├── urls.py                     # URL routing
 │   └── wsgi.py                     # WSGI config
 ├── mutants/                         # Mutation testing output
-├── htmlcov/                         # Coverage HTML report
 ├── conftest.py                      # pytest configuration
 ├── requirements.txt                 # Python dependencies
 ├── manage.py                        # Django management
@@ -353,32 +339,8 @@ fitness_bros/
 └── README.md                        # Bu dosya
 ```
 
----
-
-## 📊 Test Raporları
-
-### Coverage Raporu
-```bash
-pytest --cov=. --cov-report=html
-open htmlcov/index.html
-```
-
-### Mutation Testing Raporu
-```bash
-mutmut run
-mutmut html
-open html/index.html
-```
-
-### Detaylı Raporlar
-- `TEST_PLAN.md` → Test stratejisi ve planı
-- `MUTATION_TESTING_REPORT.md` → Mutation test analizi
-- `TEST_IMPLEMENTATION_SUMMARY.md` → Test implementasyon detayları
-
----
-
 ## 🤝 Katkıda Bulunanlar
 
+- **Akın Menge**
 - **Sultan Kayı**
 - **Mert Kaplan**
-- **Akın Menge** 
