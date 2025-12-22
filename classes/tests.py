@@ -1,3 +1,4 @@
+import pytest
 from django.test import TestCase
 from django.utils import timezone
 from django.core.exceptions import ValidationError
@@ -10,6 +11,7 @@ from . models import FitnessClass
 User = get_user_model()
 
 
+@pytest.mark.django_db
 class FitnessClassModelTests(TestCase):
 
     def setUp(self):

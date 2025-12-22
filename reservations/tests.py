@@ -1,3 +1,4 @@
+import pytest
 import json
 from datetime import timedelta
 from unittest.mock import patch
@@ -21,6 +22,7 @@ from .services import PricingEngine
 
 User = get_user_model()
 
+@pytest.mark.django_db
 class PricingEngineUnitTests(TestCase):
     """
     BÖLÜM 1: MANTIK TESTLERİ (UNIT TEST)
@@ -89,6 +91,7 @@ class PricingEngineUnitTests(TestCase):
         self.assertEqual(calculated_price, Decimal('75.00'))
 
 
+@pytest.mark.django_db
 class ReservationModelTests(TestCase):
     """
     BÖLÜM 2: MODEL VE DATABASE TESTLERİ (INTEGRATION)
@@ -163,6 +166,7 @@ class ReservationModelTests(TestCase):
         self.assertEqual(res.price_paid, Decimal('90.00'))
 
 
+@pytest.mark.django_db
 class ReservationAPITests(TestCase):
     """
     BÖLÜM 3: END-TO-END API TESTLERİ
