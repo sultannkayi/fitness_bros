@@ -1,0 +1,404 @@
+{
+	"info": {
+		"_postman_id": "fitness-bros-api-collection",
+		"name": "Fitness Bros API Tests",
+		"description": "Complete API test collection for Fitness Bros - CEN315 Test Engineering Project\n\n## Overview\nThis collection includes all API endpoints for the Fitness Bros gym management system:\n- Authentication (Register, Login)\n- Classes (List fitness classes)\n- Reservations (Create, Delete)\n- Membership pricing and capacity management\n\n## Setup\n1. Start Django backend: `python manage.py runserver`\n2. Set environment variables in Postman:\n   - `base_url`: http://localhost:8000\n   - `token`: Will be auto-set after login\n\n## Test Order\nRun tests in this order:\n1. Auth → Register\n2. Auth → Login (saves token automatically)\n3. Classes → Get All Classes\n4. Reservations → Create Reservation\n5. Reservations → Delete Reservation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has user data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 500ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"testuser@fitnessbros.com\",\n    \"name\": \"Test User\",\n    \"password\": \"StrongPass123!\",\n    \"password2\": \"StrongPass123!\",\n    \"gender\": \"Male\",\n    \"dateOfBirth\": \"1995-05-22\",\n    \"height\": \"175\",\n    \"weight\": \"70\",\n    \"age\": \"28\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/register/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register",
+								""
+							]
+						},
+						"description": "Register a new user account.\n\n**Request Body:**\n- email: Valid email address\n- name: User's full name\n- password: Strong password\n- password2: Password confirmation\n- gender: Male/Female\n- dateOfBirth: YYYY-MM-DD format\n- height: Height in cm\n- weight: Weight in kg\n- age: Age in years"
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('token');",
+									"    pm.expect(jsonData.token).to.be.a('string');",
+									"    ",
+									"    // Save token for subsequent requests",
+									"    pm.environment.set(\"token\", jsonData.token);",
+									"});",
+									"",
+									"pm.test(\"Response has user data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('user');",
+									"    pm.expect(jsonData.user).to.have.property('email');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"testuser@fitnessbros.com\",\n    \"password\": \"StrongPass123!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/auth/login/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login",
+								""
+							]
+						},
+						"description": "Login with existing user credentials.\n\n**Request Body:**\n- email: User's email\n- password: User's password\n\n**Response:**\n- token: JWT authentication token\n- user: User object with details"
+					},
+					"response": []
+				}
+			],
+			"description": "User authentication endpoints - registration and login"
+		},
+		{
+			"name": "Classes",
+			"item": [
+				{
+					"name": "Get All Fitness Classes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each class has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        var firstClass = jsonData[0];",
+									"        pm.expect(firstClass).to.have.property('id');",
+									"        pm.expect(firstClass).to.have.property('name');",
+									"        pm.expect(firstClass).to.have.property('instructor');",
+									"        pm.expect(firstClass).to.have.property('capacity');",
+									"        pm.expect(firstClass).to.have.property('date_time');",
+									"        ",
+									"        // Save first class ID for reservation tests",
+									"        pm.environment.set(\"class_id\", firstClass.id);",
+									"    }",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 300ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/classes/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"classes",
+								""
+							]
+						},
+						"description": "Get list of all active fitness classes.\n\n**No authentication required**\n\n**Response:**\nArray of class objects with:\n- id: Class ID\n- name: Class name (Yoga, Zumba, CrossFit, etc.)\n- description: Class description\n- instructor: Instructor name\n- capacity: Maximum participants\n- current_bookings: Current number of bookings\n- date_time: Class date and time\n- duration: Class duration in minutes"
+					},
+					"response": []
+				}
+			],
+			"description": "Fitness class endpoints - view available classes"
+		},
+		{
+			"name": "Reservations",
+			"item": [
+				{
+					"name": "Create Reservation",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has reservation ID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData.id).to.be.a('number');",
+									"    ",
+									"    // Save reservation ID for delete test",
+									"    pm.environment.set(\"reservation_id\", jsonData.id);",
+									"});",
+									"",
+									"pm.test(\"Reservation created successfully\", function () {",
+									"    pm.response.to.be.success;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fitness_class\": {{class_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/reservations/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"reservations",
+								""
+							]
+						},
+						"description": "Create a new reservation for a fitness class.\n\n**Authentication required** (Bearer token)\n\n**Request Body:**\n- fitness_class: ID of the fitness class\n\n**Business Logic:**\n- Validates class capacity\n- Checks for scheduling conflicts\n- Validates reservation timing (at least 1 hour in advance)\n- Calculates dynamic pricing based on:\n  - User's membership type (STUDENT/STANDARD/PREMIUM)\n  - Class occupancy rate (surge pricing if >80%)\n  - Peak hours (6-8am, 5-8pm)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Reservation (Cancel)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204 No Content\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									"pm.test(\"Reservation cancelled successfully\", function () {",
+									"    pm.response.to.be.success;",
+									"});",
+									"",
+									"pm.test(\"Response body is empty\", function () {",
+									"    pm.expect(pm.response.text()).to.be.empty;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/reservations/{{reservation_id}}/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"reservations",
+								"{{reservation_id}}",
+								""
+							]
+						},
+						"description": "Cancel an existing reservation.\n\n**Authentication required** (Bearer token)\n\n**Cancellation Policy:**\n- Free cancellation: >24 hours before class\n- 50% refund: 12-24 hours before class\n- No refund: <12 hours before class\n\n**Response:**\n- 204 No Content on success"
+					},
+					"response": []
+				}
+			],
+			"description": "Reservation endpoints - create and cancel reservations"
+		},
+		{
+			"name": "Health Check",
+			"item": [
+				{
+					"name": "API Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200 OK\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Django admin is accessible\", function () {",
+									"    pm.response.to.be.success;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/admin/",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								""
+							]
+						},
+						"description": "Quick health check to verify backend is running"
+					},
+					"response": []
+				}
+			],
+			"description": "Health check endpoint to verify API is running"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global pre-request script",
+					"console.log('Running request to: ' + pm.request.url);"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script",
+					"pm.test(\"Content-Type is present\", function () {",
+					"    pm.response.to.have.header(\"Content-Type\");",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "class_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "reservation_id",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
