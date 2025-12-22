@@ -6,6 +6,10 @@ from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from reservations.models import Reservation
 from django.utils import timezone
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import IsAdminUser
+from .models import Member
+
 
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -70,3 +74,40 @@ class UserProfileView(APIView):
             "detail": f"Üyelik paketiniz '{new_type}' olarak başarıyla güncellendi.",
             "membership_type": member.membership_type
         }, status=status.HTTP_200_OK)
+    
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def all_members_admin_view(request):
+    """
+    Sadece staff (admin) kullanıcılar tüm üyeleri görebilir.
+    """
+    if not request.user.is_staff:
+        return Response(
+            {"detail": "Bu işlem için admin yetkisi gereklidir."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    members = Member.objects.select_related('user').all().order_by('user__email')
+    data = []
+    for member in members:
+        user = member.user
+        full_name = f"{user.first_name} {user.last_name}".strip()
+        if not full_name:
+            full_name = user.email
+
+        data.append({
+            "id": member.id,
+            "user_id": user.id,
+            "email": user.email,
+            "first_name": user.first_name or "",
+            "last_name": user.last_name or "",
+            "full_name": full_name,
+            "membership_type": dict(Member.MEMBERSHIP_CHOICES).get(member.membership_type, member.membership_type),
+            "gender": member.gender or "Belirtilmemiş",
+            "birth_date": member.birth_date.isoformat() if member.birth_date else None,
+            "height": str(member.height) + " cm" if member.height else None,
+            "weight": str(member.weight) + " kg" if member.weight else None,
+            "is_active": user.is_active,
+        })
+
+    return Response(data)
