@@ -204,33 +204,178 @@
   text-align: right;
 }
 
-/* List Section */
+/* List Section - İYİLEŞTİRİLDİ */
 .profile-list-section {
   margin-top: 2rem;
   padding-top: 1.5rem;
   border-top: 1px solid #f0f0f0;
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 1rem;
 }
 
 .list-label {
-  font-size: 0.9rem;
-  color: #999;
-  margin: 0;
-}
-
-.list-value {
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   color: #333;
   font-weight: 600;
   margin: 0;
 }
 
-.list-number {
-  font-size: 0.9rem;
-  color: #999;
+/* + Yeni Rezervasyon Butonu - İYİLEŞTİRİLDİ */
+.go-to-reservations {
+  background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%);
+  color: white;
+  border: none;
+  padding: 0.9rem 1.8rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 6px 20px rgba(255, 87, 34, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  align-self: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.go-to-reservations::before {
+  content: '+';
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.go-to-reservations:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(255, 87, 34, 0.35);
+  background: linear-gradient(135deg, #ff7043 0%, #ff8a65 100%);
+}
+
+.go-to-reservations:active {
+  transform: translateY(-1px);
+}
+
+/* Rezervasyon listesi - İYİLEŞTİRİLDİ */
+.reservations-list {
+  margin-top: 0.5rem;
+  max-height: none; /* Sabit yükseklik kaldırıldı */
+  overflow-y: visible;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem; /* Kartlar arası boşluk */
+}
+
+/* Tek rezervasyon kartı - İYİLEŞTİRİLDİ */
+.reservation-item {
+  background: #f8f9fa;
+  border-radius: 16px;
+  padding: 1.6rem;
+  border-left: 5px solid #ff5722;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.reservation-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(255, 87, 34, 0.15);
+  border-left-color: #ff7043;
+}
+
+.reservation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reservation-class-name {
+  font-size: 1.3rem;
+  color: #333;
   margin: 0;
+  font-weight: 700;
+  flex: 1;
+}
+
+.reservation-status.confirmed {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.reservation-instructor {
+  color: #555;
+  font-size: 1rem;
+  margin: 0.8rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reservation-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin: 1rem 0;
+  font-size: 1rem;
+}
+
+.reservation-details span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #444;
+  font-weight: 500;
+}
+
+/* Ödenen tutar stilini iyileştir */
+.reservation-item > div[style*="fontSize: '0.9em'"] {
+  font-size: 1rem !important;
+  color: #333 !important;
+  margin: 1rem 0;
+  font-weight: 600;
+}
+
+/* İptal butonu - İYİLEŞTİRİLDİ */
+.cancel-reservation-button {
+  margin-top: 1rem;
+  padding: 0.7rem 1.5rem;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.3s;
+  align-self: flex-start;
+}
+
+.cancel-reservation-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3);
+}
+
+/* Henüz rezervasyon yok - İYİLEŞTİRİLDİ */
+.no-reservations {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: #999;
+  background: #f8f9fa;
+  border-radius: 16px;
+  margin-top: 1rem;
+}
+
+.no-reservations p {
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
 }
 
 /* Right Section - Gym Image */
@@ -313,118 +458,46 @@
   }
 }
 
-/* Rezervasyon Listesi Stilleri */
-.reservations-list {
-  margin-top: 1rem;
-  max-height: 400px;
-  overflow-y: auto;
+/* SweetAlert2 Özel Stilleri */
+.swal2-popup {
+  font-family: 'Segoe UI', sans-serif !important;
+  border-radius: 16px !important;
 }
 
-.reservation-item {
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 1.2rem;
-  margin-bottom: 1rem;
-  border-left: 4px solid #ff5722;
-  transition: all 0.3s;
+.swal2-title {
+  font-size: 1.6rem !important;
+  font-weight: 700 !important;
 }
 
-.reservation-item:hover {
-  transform: translateX(5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+.swal2-html-container {
+  font-size: 1.1rem !important;
 }
 
-.reservation-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.8rem;
+.swal2-confirm {
+  background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%) !important;
+  border-radius: 50px !important;
+  padding: 0.8rem 2rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 8px 20px rgba(255, 87, 34, 0.3) !important;
 }
 
-.reservation-class-name {
-  font-size: 1.2rem;
-  color: #333;
-  margin: 0;
-  font-weight: bold;
+.swal2-cancel {
+  background: #718096 !important;
+  border-radius: 50px !important;
+  padding: 0.8rem 2rem !important;
 }
 
-.reservation-status {
-  padding: 0.3rem 0.8rem;
-  border-radius: 15px;
-  font-size: 0.85rem;
-  font-weight: 600;
+.swal2-icon.swal2-success {
+  border-color: #22c55e !important;
+  color: #22c55e !important;
 }
 
-.reservation-status.confirmed {
-  background: #d4edda;
-  color: #155724;
+.swal2-icon.swal2-error {
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
 }
 
-.reservation-instructor {
-  color: #555;
-  font-size: 0.95rem;
-  margin: 0.5rem 0;
+.swal2-icon.swal2-warning {
+  border-color: #ff5722 !important;
+  color: #ff5722 !important;
 }
-
-.reservation-details {
-  display: flex;
-  gap: 1.5rem;
-  margin: 0.8rem 0;
-}
-
-.reservation-day,
-.reservation-time {
-  color: #667eea;
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.reservation-date {
-  color: #999;
-  font-size: 0.85rem;
-  margin: 0.5rem 0 0;
-}
-
-.no-reservations {
-  text-align: center;
-  padding: 2rem;
-  color: #999;
-}
-
-.no-reservations p {
-  margin: 0 0 1rem;
-  font-size: 1rem;
-}
-
-.go-to-reservations {
-  background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%);
-  color: white;
-  border: none;
-  padding: 0.8rem 1.5rem;
-  font-size: 0.95rem;
-  font-weight: bold;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.go-to-reservations:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(255, 87, 34, 0.4);
-}
-
-.cancel-reservation-button {
-  margin-top: 10px;
-  padding: 8px 14px;
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.cancel-reservation-button:hover {
-  background-color: #c0392b;
-}
-

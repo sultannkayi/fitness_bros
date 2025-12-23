@@ -1,278 +1,473 @@
+/* Reservations.css */
+/* Ana sayfa konteyneri */
 .reservations-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 6rem 2rem 3rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
+/* İçerik düzeni */
 .reservations-container {
   max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
 }
 
+/* Başlık bölümü */
 .reservations-header {
   text-align: center;
   margin-bottom: 3rem;
-  color: white;
+  color: #2d3748;
 }
 
 .reservations-title {
   font-size: 3rem;
-  font-weight: bold;
+  font-weight: 800;
   margin: 0 0 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .highlight {
-  color: #ff5722;
+  color: #ff6b35;
+  font-weight: 900;
 }
 
 .reservations-subtitle {
   font-size: 1.2rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: #4a5568;
   margin: 0;
+  font-weight: 500;
 }
 
-/* Content Layout */
+/* Ana içerik düzeni */
 .reservations-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
+  gap: 2.5rem;
   margin-top: 2rem;
 }
 
-/* Classes List */
+/* Ders listesi bölümü */
 .classes-list {
   background: white;
   border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 2.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.classes-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.classes-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.classes-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
 }
 
 .list-title {
   font-size: 1.8rem;
-  color: #333;
-  margin: 0 0 1.5rem;
-  font-weight: bold;
-  border-bottom: 3px solid #ff5722;
-  padding-bottom: 0.5rem;
+  color: #2d3748;
+  margin: 0 0 2rem;
+  font-weight: 700;
+  position: relative;
+  padding-bottom: 1rem;
 }
 
+.list-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
+/* Ders kartları */
 .class-item {
-  background: #f8f9fa;
-  border-radius: 15px;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
+  background: linear-gradient(145deg, #ffffff, #f0f4ff);
+  border-radius: 16px;
+  padding: 1.8rem;
+  margin-bottom: 1.2rem;
   cursor: pointer;
-  transition: all 0.3s;
-  border: 3px solid transparent;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.class-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, #667eea, #764ba2);
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
 .class-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(102, 126, 234, 0.15);
+  border-color: #667eea;
+}
+
+.class-item:hover::before {
+  opacity: 1;
 }
 
 .class-item.selected {
-  border-color: #ff5722;
-  background: #fff5f2;
-  box-shadow: 0 10px 30px rgba(255, 87, 34, 0.3);
+  border-color: #ff6b35;
+  background: linear-gradient(145deg, #fff5f0, #ffe8d6);
+  box-shadow: 0 15px 40px rgba(255, 107, 53, 0.2);
+  transform: translateY(-3px);
 }
 
+.class-item.selected::before {
+  background: linear-gradient(to bottom, #ff6b35, #ff8e53);
+  opacity: 1;
+}
+
+/* Ders kartı içeriği */
 .class-item-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.8rem;
+  margin-bottom: 1rem;
 }
 
 .class-item-name {
-  font-size: 1.3rem;
-  color: #333;
+  font-size: 1.4rem;
+  color: #2d3748;
   margin: 0;
-  font-weight: bold;
+  font-weight: 700;
 }
 
 .class-capacity {
-  background: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
+  padding: 0.5rem 1.2rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
   font-weight: 600;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .class-instructor {
-  color: #555;
-  font-size: 0.95rem;
-  margin: 0.5rem 0;
+  color: #4a5568;
+  font-size: 1rem;
+  margin: 0.8rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .class-instructor strong {
-  color: #333;
+  color: #2d3748;
+  font-weight: 600;
 }
 
 .class-description {
-  color: #666;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  margin: 0.8rem 0 0;
+  color: #718096;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 1rem 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Schedule Selection */
+/* Seçili ders detay bölümü */
 .schedule-selection {
   background: white;
   border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 2.5rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   display: flex;
   flex-direction: column;
+  height: fit-content;
+  position: sticky;
+  top: 2rem;
 }
 
 .selected-class-info {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 1.5rem;
-  border-radius: 15px;
-  margin-bottom: 1.5rem;
+  padding: 2rem;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
 }
 
 .selected-class-info h3 {
-  margin: 0 0 0.5rem;
-  font-size: 1.5rem;
+  margin: 0 0 1rem;
+  font-size: 1.8rem;
+  font-weight: 700;
 }
 
 .selected-class-info p {
-  margin: 0;
+  margin: 0.5rem 0;
   opacity: 0.95;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
+/* Detay kartları */
 .schedule-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: 1.2rem;
+  margin-bottom: 2rem;
 }
 
 .schedule-card {
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: linear-gradient(145deg, #ffffff, #f8faff);
+  border-radius: 14px;
+  padding: 1.8rem;
   cursor: pointer;
-  transition: all 0.3s;
-  border: 3px solid transparent;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
 .schedule-card:hover:not(.full) {
-  transform: translateX(5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transform: translateX(8px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
 }
 
 .schedule-card.selected {
-  border-color: #ff5722;
-  background: #fff5f2;
-  box-shadow: 0 5px 20px rgba(255, 87, 34, 0.3);
+  border-color: #ff6b35;
+  background: linear-gradient(145deg, #fff5f0, #ffe8d6);
+  box-shadow: 0 10px 30px rgba(255, 107, 53, 0.15);
 }
 
 .schedule-card.full {
-  opacity: 0.5;
+  opacity: 0.6;
   cursor: not-allowed;
-  background: #e9ecef;
+  background: linear-gradient(145deg, #f1f1f1, #e8e8e8);
 }
 
 .schedule-day {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #333;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #2d3748;
 }
 
 .schedule-time {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #667eea;
+  font-size: 1.6rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .schedule-availability {
   text-align: right;
 }
 
-.schedule-availability .available {
-  color: #28a745;
-  font-weight: 600;
+.availability-badge {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.schedule-availability .unavailable {
-  color: #dc3545;
-  font-weight: 600;
+.availability-badge.available {
+  background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+  color: white;
 }
 
-/* No Selection State */
+.availability-badge.unavailable {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  color: white;
+}
+
+/* Seçili ders yok durumu */
 .no-selection {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #999;
+  color: #a0aec0;
   text-align: center;
-  padding: 3rem;
+  padding: 4rem 2rem;
 }
 
 .no-selection svg {
-  margin-bottom: 1.5rem;
-  color: #ddd;
+  margin-bottom: 2rem;
+  width: 120px;
+  height: 120px;
+  opacity: 0.5;
 }
 
 .no-selection h3 {
-  font-size: 1.5rem;
-  color: #666;
-  margin: 0 0 0.5rem;
+  font-size: 1.8rem;
+  color: #4a5568;
+  margin: 0 0 1rem;
+  font-weight: 600;
 }
 
 .no-selection p {
-  color: #999;
+  color: #718096;
   margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
 }
 
-/* Reservation Button */
+/* Rezervasyon butonu */
 .reservation-button {
-  background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%);
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%);
   color: white;
   border: none;
-  padding: 1rem 2rem;
-  font-size: 1.1rem;
-  font-weight: bold;
+  padding: 1.2rem 2.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
   border-radius: 50px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   text-transform: uppercase;
   letter-spacing: 1px;
-  box-shadow: 0 10px 30px rgba(255, 87, 34, 0.3);
+  box-shadow: 0 15px 35px rgba(255, 107, 53, 0.25);
+  position: relative;
+  overflow: hidden;
   margin-top: auto;
 }
 
+.reservation-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
 .reservation-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 40px rgba(255, 87, 34, 0.4);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 20px 45px rgba(255, 107, 53, 0.35);
+}
+
+.reservation-button:hover::before {
+  left: 100%;
 }
 
 .reservation-button:active {
   transform: translateY(-1px);
 }
 
-/* Responsive Design */
+.reservation-button:disabled {
+  background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Yükleniyor ve hata durumları */
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: 2rem;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 2rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message {
+  color: #e53e3e;
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  max-width: 400px;
+}
+
+.retry-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.retry-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive tasarım */
+@media (max-width: 1200px) {
+  .reservations-content {
+    gap: 2rem;
+  }
+ 
+  .classes-list,
+  .schedule-selection {
+    padding: 2rem;
+  }
+}
+
 @media (max-width: 968px) {
   .reservations-content {
     grid-template-columns: 1fr;
   }
-
-  .reservations-title {
-    font-size: 2.5rem;
-  }
-
+ 
   .schedule-selection {
     margin-top: 2rem;
+    position: static;
+  }
+ 
+  .reservations-title {
+    font-size: 2.5rem;
   }
 }
 
@@ -280,40 +475,131 @@
   .reservations-page {
     padding: 5rem 1rem 2rem;
   }
-
+ 
   .reservations-title {
-    font-size: 2rem;
+    font-size: 2.2rem;
   }
-
+ 
   .class-item-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.5rem;
+    gap: 1rem;
   }
-
+ 
+  .class-capacity {
+    align-self: flex-start;
+  }
+ 
   .schedule-card {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 1rem;
     align-items: flex-start;
   }
-
+ 
   .schedule-availability {
     text-align: left;
+    width: 100%;
   }
+ 
+  .reservations-header {
+    margin-bottom: 2rem;
+  }
+ 
+  .list-title {
+    font-size: 1.6rem;
+  }
+}
 
+@media (max-width: 480px) {
+  .reservations-title {
+    font-size: 1.8rem;
+  }
+ 
+  .class-item,
+  .schedule-card {
+    padding: 1.5rem;
+  }
+ 
   .reservation-button {
-  margin-top: 16px;
-  padding: 12px 20px;
-  background-color: #ff7a00;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+  }
+ 
+  .selected-class-info {
+    padding: 1.5rem;
+  }
+ 
+  .selected-class-info h3 {
+    font-size: 1.5rem;
+  }
 }
 
-.reservation-button:hover {
-  background-color: #e66e00;
+/* Animasyonlar */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
+.class-item,
+.schedule-card,
+.reservation-button {
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.class-item:nth-child(odd) {
+  animation-delay: 0.1s;
+}
+
+.class-item:nth-child(even) {
+  animation-delay: 0.2s;
+}
+
+/* SweetAlert2 Özel Stilleri */
+.swal2-popup {
+  font-family: 'Segoe UI', sans-serif !important;
+  border-radius: 16px !important;
+}
+
+.swal2-title {
+  font-size: 1.6rem !important;
+  font-weight: 700 !important;
+}
+
+.swal2-html-container {
+  font-size: 1.1rem !important;
+}
+
+.swal2-confirm {
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8e53 100%) !important;
+  border-radius: 50px !important;
+  padding: 0.8rem 2rem !important;
+  font-weight: 600 !important;
+  box-shadow: 0 8px 20px rgba(255, 107, 53, 0.3) !important;
+}
+
+.swal2-cancel {
+  background: #718096 !important;
+  border-radius: 50px !important;
+  padding: 0.8rem 2rem !important;
+}
+
+.swal2-icon.swal2-success {
+  border-color: #22c55e !important;
+  color: #22c55e !important;
+}
+
+.swal2-icon.swal2-error {
+  border-color: #ef4444 !important;
+  color: #ef4444 !important;
+}
+
+.swal2-icon.swal2-warning {
+  border-color: #ff6b35 !important;
+  color: #ff6b35 !important;
 }

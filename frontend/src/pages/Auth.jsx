@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../api"; // <-- src/api.js dosyanı import et (axios instance)
 import "./Auth.css";
 
 export default function Auth() {
@@ -8,7 +9,7 @@ export default function Auth() {
 
   const [signInData, setSignInData] = useState({
     email: "",
-    password: ""
+    password: "",
   });
 
   const [signUpData, setSignUpData] = useState({
@@ -19,56 +20,80 @@ export default function Auth() {
     gender: "",
     dateOfBirth: "",
     height: "",
-    weight: ""
+    weight: "",
   });
 
-  const handleSignInSubmit = (e) => {
+  // GİRİŞ YAP
+ const handleSignInSubmit = async (e) => {
   e.preventDefault();
 
-  const storedUser = JSON.parse(localStorage.getItem("userData"));
+  try {
+    const response = await api.post("/auth/login/", {
+      email: signInData.email.trim().toLowerCase(),
+      password: signInData.password,
+    });
 
-  if (!storedUser) {
-    alert("Kullanıcı bulunamadı");
-    return;
-  }
+    // YENİ TOKEN'I KAYDET (ESKİSİNİ ÜZERİNE YAZ)
+    localStorage.setItem("access_token", response.data.access);
 
-  const input = signInData.email;
-  const passwordMatch = storedUser.password === signInData.password;
+    window.location.href = "/profile";
 
-  const nameMatch = storedUser.name === input;
-  const emailMatch = storedUser.email.toLowerCase() === input.toLowerCase();
-
-  if ((nameMatch || emailMatch) && passwordMatch) {
-    localStorage.setItem("token", "dummy-token");
-    navigate("/profile");
-  } else {
-    alert("Giriş bilgileri hatalı");
+    setTimeout(() => {
+      navigate("/profile", { replace: true });
+    }, 300);
+  } catch (err) {
+    alert("Giriş başarısız: " + (err.response?.data?.detail || "E-posta veya şifre hatalı"));
   }
 };
 
-  const handleSignUpSubmit = (e) => {
+  // KAYIT OL
+  const handleSignUpSubmit = async (e) => {
     e.preventDefault();
 
-    const userData = {
-  name: `${signUpData.firstName} ${signUpData.lastName}`,
-  username: `${signUpData.firstName.toLowerCase()}${signUpData.lastName.toLowerCase()}`,
-  email: signUpData.email,
-  password: signUpData.password,
-  gender: signUpData.gender === 'male' ? 'Male' : signUpData.gender === 'female' ? 'Female' : 'Other',
-  dateOfBirth: new Date(signUpData.dateOfBirth).toLocaleDateString(
-    'en-GB',
-    { day: 'numeric', month: 'short', year: 'numeric' }
-  ),
-  height: `${signUpData.height} cm`,
-  weight: `${signUpData.weight} kg`,
-  age: `${new Date().getFullYear() - new Date(signUpData.dateOfBirth).getFullYear()} years`
-};
+    // Basit validasyonlar
+    if (
+      !signUpData.firstName ||
+      !signUpData.lastName ||
+      !signUpData.email ||
+      !signUpData.password ||
+      !signUpData.gender ||
+      !signUpData.dateOfBirth ||
+      !signUpData.height ||
+      !signUpData.weight
+    ) {
+      alert("Lütfen tüm alanları doldurun.");
+      return;
+    }
 
+    if (signUpData.password.length < 6) {
+      alert("Şifre en az 6 karakter olmalıdır.");
+      return;
+    }
 
-    localStorage.setItem("userData", JSON.stringify(userData));
-    localStorage.setItem("token", "dummy-token");
+   try {
+    const response = await api.post("/auth/register/", {
+      email: signUpData.email.trim().toLowerCase(),
+      password: signUpData.password,
+      first_name: signUpData.firstName.trim(),
+      last_name: signUpData.lastName.trim(),
+      // YENİ: Diğer bilgileri de gönderiyoruz
+      gender: signUpData.gender === "male" ? "Male" : signUpData.gender === "female" ? "Female" : "Other",
+      birth_date: signUpData.dateOfBirth,
+      height: parseFloat(signUpData.height), // cm
+      weight: parseFloat(signUpData.weight), // kg
+    });
 
-    navigate("/profile");
+    localStorage.setItem("access_token", response.data.token);
+
+    window.location.href = "/profile";
+
+    setTimeout(() => {
+      navigate("/profile", { replace: true });
+    }, 200);
+  } catch (err) {
+    console.error("Kayıt hatası:", err);
+    alert("Kayıt başarısız: " + (err.response?.data?.detail || "Lütfen bilgileri kontrol edin"));
+  }
   };
 
   return (
@@ -76,37 +101,40 @@ export default function Auth() {
       <div className="auth-container">
         <div className="auth-header">
           <h1 className="auth-brand">
-            Fitness <span className="brand-highlight">BROS</span>
+            Fitness <span className="brand-highlight">BROSS</span>
           </h1>
           <p className="auth-subtitle">İçindeki Gücü Serbest Bırak</p>
         </div>
 
         <div className="auth-toggle">
           <button
-            className={`toggle-btn ${!isSignUp ? 'active' : ''}`}
+            className={`toggle-btn ${!isSignUp ? "active" : ""}`}
             onClick={() => setIsSignUp(false)}
           >
             Giriş Yap
           </button>
           <button
-            className={`toggle-btn ${isSignUp ? 'active' : ''}`}
+            className={`toggle-btn ${isSignUp ? "active" : ""}`}
             onClick={() => setIsSignUp(true)}
           >
             Kayıt Ol
           </button>
         </div>
 
+        {/* GİRİŞ YAP FORMU */}
         {!isSignUp ? (
           <form className="auth-form" onSubmit={handleSignInSubmit}>
             <h2 className="form-title">Giriş Yap</h2>
 
             <div className="form-group">
-              <label htmlFor="signin-email">E-posta / Kullanıcı Adı</label>
+              <label htmlFor="signin-email">E-posta</label>
               <input
-                type="text"
+                type="email"
                 id="signin-email"
                 value={signInData.email}
-                onChange={(e) => setSignInData({...signInData, email: e.target.value})}
+                onChange={(e) =>
+                  setSignInData({ ...signInData, email: e.target.value })
+                }
                 placeholder="ornek@email.com"
                 required
               />
@@ -118,7 +146,9 @@ export default function Auth() {
                 type="password"
                 id="signin-password"
                 value={signInData.password}
-                onChange={(e) => setSignInData({...signInData, password: e.target.value})}
+                onChange={(e) =>
+                  setSignInData({ ...signInData, password: e.target.value })
+                }
                 placeholder="••••••••"
                 required
               />
@@ -130,10 +160,14 @@ export default function Auth() {
 
             <p className="form-footer">
               Hesabınız yok mu?
-              <span className="link" onClick={() => setIsSignUp(true)}> Kayıt Ol</span>
+              <span className="link" onClick={() => setIsSignUp(true)}>
+                {" "}
+                Kayıt Ol
+              </span>
             </p>
           </form>
         ) : (
+          /* KAYIT OL FORMU */
           <form className="auth-form" onSubmit={handleSignUpSubmit}>
             <h2 className="form-title">Kayıt Ol</h2>
 
@@ -144,7 +178,9 @@ export default function Auth() {
                   type="text"
                   id="signup-firstname"
                   value={signUpData.firstName}
-                  onChange={(e) => setSignUpData({...signUpData, firstName: e.target.value})}
+                  onChange={(e) =>
+                    setSignUpData({ ...signUpData, firstName: e.target.value })
+                  }
                   placeholder="İsim"
                   required
                 />
@@ -156,7 +192,9 @@ export default function Auth() {
                   type="text"
                   id="signup-lastname"
                   value={signUpData.lastName}
-                  onChange={(e) => setSignUpData({...signUpData, lastName: e.target.value})}
+                  onChange={(e) =>
+                    setSignUpData({ ...signUpData, lastName: e.target.value })
+                  }
                   placeholder="Soyisim"
                   required
                 />
@@ -169,7 +207,9 @@ export default function Auth() {
                 type="email"
                 id="signup-email"
                 value={signUpData.email}
-                onChange={(e) => setSignUpData({...signUpData, email: e.target.value})}
+                onChange={(e) =>
+                  setSignUpData({ ...signUpData, email: e.target.value })
+                }
                 placeholder="ornek@email.com"
                 required
               />
@@ -181,7 +221,9 @@ export default function Auth() {
                 type="password"
                 id="signup-password"
                 value={signUpData.password}
-                onChange={(e) => setSignUpData({...signUpData, password: e.target.value})}
+                onChange={(e) =>
+                  setSignUpData({ ...signUpData, password: e.target.value })
+                }
                 placeholder="••••••••"
                 required
                 minLength="6"
@@ -193,7 +235,9 @@ export default function Auth() {
               <select
                 id="signup-gender"
                 value={signUpData.gender}
-                onChange={(e) => setSignUpData({...signUpData, gender: e.target.value})}
+                onChange={(e) =>
+                  setSignUpData({ ...signUpData, gender: e.target.value })
+                }
                 required
               >
                 <option value="">Seçiniz</option>
@@ -209,7 +253,9 @@ export default function Auth() {
                 type="date"
                 id="signup-dob"
                 value={signUpData.dateOfBirth}
-                onChange={(e) => setSignUpData({...signUpData, dateOfBirth: e.target.value})}
+                onChange={(e) =>
+                  setSignUpData({ ...signUpData, dateOfBirth: e.target.value })
+                }
                 required
               />
             </div>
@@ -221,7 +267,9 @@ export default function Auth() {
                   type="number"
                   id="signup-height"
                   value={signUpData.height}
-                  onChange={(e) => setSignUpData({...signUpData, height: e.target.value})}
+                  onChange={(e) =>
+                    setSignUpData({ ...signUpData, height: e.target.value })
+                  }
                   placeholder="175"
                   required
                 />
@@ -233,7 +281,9 @@ export default function Auth() {
                   type="number"
                   id="signup-weight"
                   value={signUpData.weight}
-                  onChange={(e) => setSignUpData({...signUpData, weight: e.target.value})}
+                  onChange={(e) =>
+                    setSignUpData({ ...signUpData, weight: e.target.value })
+                  }
                   placeholder="70"
                   required
                 />
@@ -246,7 +296,10 @@ export default function Auth() {
 
             <p className="form-footer">
               Zaten hesabınız var mı?
-              <span className="link" onClick={() => setIsSignUp(false)}> Giriş Yap</span>
+              <span className="link" onClick={() => setIsSignUp(false)}>
+                {" "}
+                Giriş Yap
+              </span>
             </p>
           </form>
         )}

@@ -16,6 +16,7 @@ export default function AppRouter() {
         <Route path="/reservations" element={<Reservations />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="*" element={<Auth />} /> {/* Yanlış yollar auth'a düşsün */}
       </Routes>
     </BrowserRouter>
   );
