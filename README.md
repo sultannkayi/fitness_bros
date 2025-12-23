@@ -61,14 +61,14 @@ Bu proje, **Test Engineering (CEN315)** dersi kapsamında geliştirilmiş olup, 
 - 🔔 **Modal Sistemler:** Plan seçimi, rezervasyon onayı için popup'lar
 - 🌐 **Türkçe Lokalizasyon:** Tam Türkçe arayüz desteği
 
-### Test Kapsamı
+### Test Coverage
 
-- ✅ **Birim Testleri:** %90+ kapsama (modeller, servisler, doğrulayıcılar)
-- 🔗 **Entegrasyon Testleri:** API uç noktaları, veritabanı işlemleri
-- 🧬 **Mutasyon Testi:** mutmut ile kod kalitesi analizi
-- 🔒 **Güvenlik Testleri:** OWASP ZAP, girdi doğrulama, JWT güvenliği
-- ⚡ **Performans Testleri:** Yük testi, eşzamanlı işlemler
-- 📊 **Özellik Tabanlı Testler:** Hypothesis framework ile uç durum keşfi
+- ✅ **Unit Tests:** %90+ coverage (models, services, validators)
+- 🔗 **Integration Tests:** API endpoints, database operations
+- 🧬 **Mutation Testing:** mutmut ile kod kalitesi analizi
+- 🔒 **Security Tests:** OWASP ZAP, input validation, JWT security
+- ⚡ **Performance Tests:** Load testing, concurrent operations
+- 📊 **Property-Based Tests:** Hypothesis framework ile edge case discovery
 
 ---
 
