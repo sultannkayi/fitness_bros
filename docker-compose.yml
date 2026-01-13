@@ -15,14 +15,18 @@ services:
 
   backend:
     build: ./backend
+    env_file:
+      - .env
     command: >
-      sh -c "sleep 10 &&
-             python manage.py migrate &&
-             python manage.py collectstatic --noinput &&
-             gunicorn main.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
-    environment:
-      - DEBUG=0
-      - DATABASE_URL=postgres://postgres:strongpassword123@db:5432/fitnessbros
+      sh -c "
+      python manage.py migrate &&
+      python manage.py collectstatic --noinput &&
+      gunicorn main.wsgi:application
+      --bind 0.0.0.0:8000
+      --workers 3
+      "
+    volumes:
+      - static_volume:/app/static
     depends_on:
       db:
         condition: service_healthy
@@ -39,3 +43,4 @@ services:
 
 volumes:
   postgres_data:
+  static_volume:
