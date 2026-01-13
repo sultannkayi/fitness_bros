@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,7 +46,7 @@ INSTALLED_APPS = [
     'memberships.apps.MembershipsConfig',
     'classes',
     'reservations',
-    'rest_framework_simplejwt',  # ← EKLE (eğer yoksa)
+    'rest_framework_simplejwt',  
 ]
 
 MIDDLEWARE = [
@@ -82,15 +83,16 @@ WSGI_APPLICATION = 'main.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'fitnessbros'),
-        'USER': os.getenv('POSTGRES_USER', 'fitness'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'strongpassword123'),
-        'HOST': 'db',  # docker-compose'daki servis adı
-        'PORT': '5432',
-    }
+    "default": dj_database_url.config(
+        default=os.getenv(
+            "DATABASE_URL",
+            "postgres://postgres:strongpassword123@localhost:5432/fitnessbros"
+        ),
+        conn_max_age=600,
+    )
 }
 
 # Password validation
@@ -127,7 +129,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/django-static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # CORS ayarları web deployment için
