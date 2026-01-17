@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'classes',
     'reservations',
     'rest_framework_simplejwt',  
+    'payment',
 ]
 
 MIDDLEWARE = [
