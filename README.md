@@ -344,3 +344,46 @@ fitness_bros/
 - **Akın Menge**
 - **Sultan Kayı**
 - **Mert Kaplan**
+
+---
+
+## 💳 Payments (Iyzico)
+
+Sandbox ortamında Iyzico (Iyzipay) ile üyelik ödemeleri desteklenir. 3 plan bulunur: `student`, `standard`, `premium`.
+
+### Kurulum
+
+1) Ortam değişkenlerini ayarlayın:
+
+```bash
+set IYZI_API_KEY=<sandbox_api_key>
+set IYZI_SECRET_KEY=<sandbox_secret_key>
+set IYZI_BASE_URL=https://sandbox-api.iyzipay.com
+set IYZI_CALLBACK_URL=https://<NGROK_ID>.ngrok.io/api/payment/callback/
+```
+
+2) Bağımlılığı yükleyin ve migrate edin:
+
+```bash
+pip install -r backend/requirements.txt
+python backend/manage.py migrate
+python backend/manage.py runserver 0.0.0.0:8000
+```
+
+3) Ngrok ile local server'ı publish edin:
+
+```bash
+ngrok http 8000
+```
+
+Ngrok URL'sini `IYZI_CALLBACK_URL` olarak kullanın.
+
+### API Akışı
+
+- Planları listele: `GET /api/payment/plans/`
+- Ödeme başlat: `POST /api/payment/init/ { "membership_type": "standard" }`  (JWT zorunlu)
+  - Yanıt: `token`, `payment_page_url` veya `checkout_form_content`
+- Iyzico ödeme UI tamamlandıktan sonra callback: `POST /api/payment/callback/` (Iyzico tarafından çağrılır)
+- Durum sorgula: `GET /api/payment/status/{conversation_id}/` (JWT)
+
+Başarılı ödeme sonrası kullanıcının `member_profile.membership_type` alanı ilgili plana güncellenir.
