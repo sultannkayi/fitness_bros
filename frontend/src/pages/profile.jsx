@@ -4,8 +4,10 @@ import api from "../api";
 import "./Profile.css";
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
+import { useSearchParams } from "react-router-dom";
 
 const MySwal = withReactContent(Swal);
+
 
 const PLAN_TYPES = [
   {
@@ -53,6 +55,7 @@ export default function Profile() {
   const [fitnessClasses, setFitnessClasses] = useState([]);
   const [showPlanModal, setShowPlanModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -98,6 +101,28 @@ export default function Profile() {
     return () => window.removeEventListener("focus", handleFocus);
   }, [loadData]);
 
+  // Callback sonrası URL'deki payment parametresine göre bilgilendirme
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    if (paymentStatus === 'success') {
+      MySwal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Üyeliğiniz güncellendi. Teşekkürler!',
+        timer: 4000,
+        timerProgressBar: true,
+      });
+      navigate('/profile', { replace: true });
+    } else if (paymentStatus === 'failed') {
+      MySwal.fire({
+        icon: 'error',
+        title: 'Ödeme Başarısız',
+        text: 'Ödeme işlemi tamamlanamadı. Lütfen tekrar deneyin.',
+      });
+      navigate('/profile', { replace: true });
+    }
+  }, [searchParams, navigate]);
+
   const handleLogout = () => {
     localStorage.removeItem("access_token");
     navigate("/auth", { replace: true });
@@ -107,6 +132,7 @@ export default function Profile() {
   const handlePlanUpdate = async () => {
     if (!selectedPlan) return;
 
+    // Mevcut rezervasyon kontrolü
     const now = new Date();
     const activeReservations = reservations.filter(r => {
       const dateString = r.fitness_class?.date_time || r.day;
@@ -139,31 +165,23 @@ export default function Profile() {
     if (!confirmResult.isConfirmed) return;
 
     try {
-      await api.patch("/memberships/me/", {
-        membership_type: selectedPlan.id
+      // Ödeme başlatma
+      const response = await api.post('/payments/initiate-membership/', {
+        membership_type: selectedPlan.id,
       });
 
-      await loadData();
-      setShowPlanModal(false);
-      setSelectedPlan(null);
-
-      MySwal.fire({
-        icon: 'success',
-        title: 'Başarılı!',
-        text: `Tebrikler! Üyeliğiniz ${selectedPlan.name} olarak güncellendi.`,
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    } catch (err) {
-      console.error("Plan güncelleme hatası:", err);
-      let errorMessage = "Üyelik planı güncellenirken bir hata oluştu.";
-      if (err.response?.data) {
-        if (typeof err.response.data === 'string') errorMessage = err.response.data;
-        else if (err.response.data.detail) errorMessage = err.response.data.detail;
-        else if (err.response.data.message) errorMessage = err.response.data.message;
+      if (response.data.status === 'success' && response.data.payment_page_url) {
+        window.location.href = response.data.payment_page_url;
+      } else {
+        throw new Error(response.data.message || 'Ödeme başlatılamadı');
       }
-      if (activeReservations.length > 0) {
-        errorMessage += "\n\nİPUCU: Gelecek rezervasyonlarınız nedeniyle değişiklik engellenmiş olabilir.";
+    } catch (err) {
+      console.error('Ödeme başlatma hatası:', err);
+      let errorMessage = 'Ödeme işlemi başlatılamadı.';
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
       }
 
       MySwal.fire({

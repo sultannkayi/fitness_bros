@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 import os
+from decimal import Decimal
 from pathlib import Path
 from datetime import timedelta
 import dj_database_url
@@ -28,11 +29,30 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
 DEBUG = True
 
 # Web deployment için localhost ve diğer hostları ekledik
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '*']
+ALLOWED_HOSTS = [
+    'localhost', 
+    '127.0.0.1', 
+    '0.0.0.0',
+    '*',
+    '.ngrok-free.dev',  # <-- Bunu ekle (Tüm ngrok sub-domainlerini kapsar)
+    'vonnie-unmotile-fourthly.ngrok-free.dev' # Veya spesifik olarak bunu
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+    'https://vonnie-unmotile-fourthly.ngrok-free.dev', # <-- BURASI KRİTİK
+]
+
+# Fitness BROSS Üyelik Planı Fiyatları (test için düşük tutarlar)
+# Production'da gerçek fiyatlara yükseltilecek: 500, 1000, 2500
+MEMBERSHIP_PRICES = {
+    'student': Decimal('5.00'),
+    'standard': Decimal('1.00'),
+    'premium': Decimal('2.50'),
+}
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -47,7 +67,11 @@ INSTALLED_APPS = [
     'classes',
     'reservations',
     'rest_framework_simplejwt',  
+<<<<<<< Updated upstream
     'payment',
+=======
+    'payments',
+>>>>>>> Stashed changes
 ]
 
 MIDDLEWARE = [
@@ -194,6 +218,7 @@ AUTH_USER_MODEL = 'authorization.User'
 
 # Iyzico/Iyzipay settings (use sandbox for local testing)
 # Provide via environment variables when running locally or in Docker
+<<<<<<< Updated upstream
 IYZI_API_KEY = os.getenv('IYZI_API_KEY', '')
 IYZI_SECRET_KEY = os.getenv('IYZI_SECRET_KEY', '')
 # Sandbox base URL: https://sandbox-api.iyzipay.com
@@ -202,3 +227,13 @@ IYZI_BASE_URL = os.getenv('IYZI_BASE_URL', 'https://sandbox-api.iyzipay.com')
 # Callback URL that Iyzico will POST the token to (set to your ngrok URL)
 # Example: https://<your-ngrok-id>.ngrok.io/api/payment/callback/
 IYZI_CALLBACK_URL = os.getenv('IYZI_CALLBACK_URL', '')
+=======
+IYZICO_API_KEY = os.getenv('IYZICO_API_KEY', '')
+IYZICO_SECRET_KEY = os.getenv('IYZICO_SECRET_KEY', '')
+# Sandbox base URL: https://sandbox-api.iyzipay.com
+IYZICO_BASE_URL = os.getenv('IYZICO_BASE_URL', 'sandbox-api.iyzipay.com')
+
+# Callback URL that Iyzico will POST the token to (set to your ngrok URL)
+# Example: https://<your-ngrok-id>.ngrok.io/api/payment/callback/
+IYZICO_CALLBACK_URL = os.getenv('IYZICO_CALLBACK_URL', '')
+>>>>>>> Stashed changes
