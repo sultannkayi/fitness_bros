@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from django.conf import settings
-import iyzipay
+import iyzipay # type: ignore
 
 
 @dataclass
@@ -10,9 +10,9 @@ class IyziOptions:
     base_url: str
 
 
-def get_iyzi_options() -> iyzipay.Options:
-    opts = iyzipay.Options()
-    opts.api_key = settings.IYZI_API_KEY
-    opts.secret_key = settings.IYZI_SECRET_KEY
-    opts.base_url = settings.IYZI_BASE_URL
-    return opts
+def get_iyzi_options():
+    return {
+        'api_key': settings.IYZI_API_KEY,
+        'secret_key': settings.IYZI_SECRET_KEY,
+        'base_url': settings.IYZI_BASE_URL,  
+    }

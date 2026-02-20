@@ -3,7 +3,7 @@ from .views import InitiatePaymentView, PaymentCallbackView, PaymentStatusView, 
 
 urlpatterns = [
     path('plans/', PlansView.as_view(), name='payment-plans'),
-    path('init/', InitiatePaymentView.as_view(), name='payment-init'),
+    path('initiate-membership/', InitiatePaymentView.as_view(), name='payment-initiate'),
     path('callback/', PaymentCallbackView.as_view(), name='payment-callback'),
     path('status/<str:conversation_id>/', PaymentStatusView.as_view(), name='payment-status'),
 ]

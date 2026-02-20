@@ -67,11 +67,7 @@ INSTALLED_APPS = [
     'classes',
     'reservations',
     'rest_framework_simplejwt',  
-<<<<<<< Updated upstream
     'payment',
-=======
-    'payments',
->>>>>>> Stashed changes
 ]
 
 MIDDLEWARE = [
@@ -218,7 +214,6 @@ AUTH_USER_MODEL = 'authorization.User'
 
 # Iyzico/Iyzipay settings (use sandbox for local testing)
 # Provide via environment variables when running locally or in Docker
-<<<<<<< Updated upstream
 IYZI_API_KEY = os.getenv('IYZI_API_KEY', '')
 IYZI_SECRET_KEY = os.getenv('IYZI_SECRET_KEY', '')
 # Sandbox base URL: https://sandbox-api.iyzipay.com
@@ -227,13 +222,3 @@ IYZI_BASE_URL = os.getenv('IYZI_BASE_URL', 'https://sandbox-api.iyzipay.com')
 # Callback URL that Iyzico will POST the token to (set to your ngrok URL)
 # Example: https://<your-ngrok-id>.ngrok.io/api/payment/callback/
 IYZI_CALLBACK_URL = os.getenv('IYZI_CALLBACK_URL', '')
-=======
-IYZICO_API_KEY = os.getenv('IYZICO_API_KEY', '')
-IYZICO_SECRET_KEY = os.getenv('IYZICO_SECRET_KEY', '')
-# Sandbox base URL: https://sandbox-api.iyzipay.com
-IYZICO_BASE_URL = os.getenv('IYZICO_BASE_URL', 'sandbox-api.iyzipay.com')
-
-# Callback URL that Iyzico will POST the token to (set to your ngrok URL)
-# Example: https://<your-ngrok-id>.ngrok.io/api/payment/callback/
-IYZICO_CALLBACK_URL = os.getenv('IYZICO_CALLBACK_URL', '')
->>>>>>> Stashed changes

@@ -166,7 +166,7 @@ export default function Profile() {
 
     try {
       // Ödeme başlatma
-      const response = await api.post('/payments/initiate-membership/', {
+      const response = await api.post('/payment/initiate-membership/', {
         membership_type: selectedPlan.id,
       });
 

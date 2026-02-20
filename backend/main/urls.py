@@ -7,9 +7,5 @@ urlpatterns = [
     path('api/reservations/', include('reservations.urls')),
     path('api/classes/', include('classes.urls')),
     path('api/memberships/', include('memberships.urls')),
-<<<<<<< Updated upstream
     path('api/payment/', include('payment.urls')),
-=======
-    path('api/payments/', include('payments.urls')),
->>>>>>> Stashed changes
 ]
